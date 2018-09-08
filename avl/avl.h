@@ -1,6 +1,15 @@
 #ifndef AVL_H
 #define AVL_H
 
+/*
+ * common headers
+ */
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <unistd.h>
+
+
 /**
  * Delete function.
  *   @ptr: The pointer.
@@ -39,12 +48,11 @@ struct avl_node_t {
 	int_fast8_t bal;
 
 	const void *ref;
-	struct avl_root_t *root;
 	struct avl_node_t *parent, *left, *right;
 };
 
 /*
- * avltree declarations
+ * avl root declarations
  */
 struct avl_root_t avl_root_init(avl_compare_f compare);
 void avl_root_destroy(struct avl_root_t *root, ssize_t offset, avl_delete_f delete);
@@ -52,11 +60,14 @@ void avl_root_destroy(struct avl_root_t *root, ssize_t offset, avl_delete_f dele
 struct avl_node_t *avl_root_first(struct avl_root_t *root);
 struct avl_node_t *avl_root_last(struct avl_root_t *root);
 
-struct avl_node_t *avl_node_prev(struct avl_node_t *node);
-struct avl_node_t *avl_node_next(struct avl_node_t *node);
-
 struct avl_node_t *avl_root_lookup(struct avl_root_t *root, const void *ref);
 void avl_root_insert(struct avl_root_t *root, struct avl_node_t *ins);
 struct avl_node_t *avl_root_remove(struct avl_root_t *root, const void *ref);
+
+/*
+ * avl node declarations
+ */
+struct avl_node_t *avl_node_prev(struct avl_node_t *node);
+struct avl_node_t *avl_node_next(struct avl_node_t *node);
 
 #endif

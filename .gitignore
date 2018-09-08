@@ -1,0 +1,14 @@
+*.d
+*.o
+*.so
+*.swp
+*.swo
+*.tar
+*.tar.gz
+*.tar.bz2
+
+misc.h
+config.h
+Makefile
+
+build/w64
