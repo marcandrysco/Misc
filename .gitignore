@@ -9,6 +9,6 @@
 
 misc.h
 config.h
-Makefile
+/Makefile
 
 build/w64

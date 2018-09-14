@@ -10,6 +10,8 @@ setconf()
   #lib_dep "pthread"
   lib_dep "m"
 
+  c_src "mdbg/mdbg.c"
+
   c_src "avl/avl.c"
 }
 ## end configuration options ##
@@ -319,7 +321,7 @@ Makefile: configure \$(wildcard config.args)
 	./configure \$(ARGS)
 
 clean:
-	rm -f $target$obj $proj-$ver.tar $proj-$ver.tar.gz $proj-$ver.tar.bz2
+	rm -f $target$obj $proj-$ver.tar.gz $proj-$ver.tar.bz2
   
 install: all$install
 
