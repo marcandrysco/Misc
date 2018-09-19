@@ -8,7 +8,10 @@ into a single library and header for use in a project.
 
 ## Components
 
+ * [AnyFS (v0.1)](afs/README.md) -- Platform independent filesystem access.
  * [AVL Tree (v0.1)](avl/README.md) -- Intrusive AVL tree implementation.
  * [Memory Debugger (v0.1)](mdbg/README.md) -- Debugging memory bugs (e.g.
      leaked memory or double free).
-
+ * [Error Mechanism (v0.1)](emech/README.md) -- Error reporting and
+     propagation library
+ * [Linear Algebra](lin/README.md) -- Linear algebra library.
