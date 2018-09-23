@@ -1,5 +1,7 @@
 #include "avl.h"
 
+#include <string.h>
+
 
 /*
  * local declarations
@@ -88,7 +90,7 @@ static struct avl_node_t *node_last(struct avl_node_t *node)
  *   @ref: The reference.
  *   &returns: The node or null.
  */
-struct avl_node_t *avl_root_lookup(struct avl_root_t *root, const void *ref)
+struct avl_node_t *avl_root_get(struct avl_root_t *root, const void *ref)
 {
 	int cmp;
 	struct avl_node_t *node;
@@ -113,7 +115,7 @@ struct avl_node_t *avl_root_lookup(struct avl_root_t *root, const void *ref)
  *   @root; The root.
  *   @node: The node.
  */
-void avl_root_insert(struct avl_root_t *root, struct avl_node_t *ins)
+void avl_root_add(struct avl_root_t *root, struct avl_node_t *add)
 {
 	int cmp;
 	struct avl_node_t **cur, *node, *parent = NULL;
@@ -122,18 +124,18 @@ void avl_root_insert(struct avl_root_t *root, struct avl_node_t *ins)
 
 	while(*cur != NULL) {
 		parent = *cur;
-		cmp = root->compare((*cur)->ref, ins->ref);
+		cmp = root->compare((*cur)->ref, add->ref);
 		if(cmp <= 0)
 			cur = &(*cur)->right;
 		else
 			cur = &(*cur)->left;
 	}
 
-	*cur = ins;
-	ins->bal = 0;
-	ins->parent = parent;
-	ins->left = ins->right = NULL;
-	node = ins;
+	*cur = add;
+	add->bal = 0;
+	add->parent = parent;
+	add->left = add->right = NULL;
+	node = add;
 	root->count++;
 
 	while((parent = node->parent) != NULL) {
@@ -170,7 +172,7 @@ struct avl_node_t *avl_root_remove(struct avl_root_t *root, const void *ref)
 	int_fast8_t bal;
 	struct avl_node_t *rem, *node;
 
-	rem = avl_root_lookup(root, ref);
+	rem = avl_root_get(root, ref);
 	if(rem == NULL)
 		return NULL;
 
@@ -247,6 +249,17 @@ struct avl_node_t *avl_root_remove(struct avl_root_t *root, const void *ref)
 	}
 
 	return rem;
+}
+
+
+/**
+ * Initialize a node.
+ *   @node: The node.
+ *   @ref: The reference.
+ */
+void avl_node_init(struct avl_node_t *node, const void *ref)
+{
+	node->ref = (void *)ref;
 }
 
 
@@ -391,3 +404,61 @@ static int_fast8_t getdir(struct avl_node_t *node)
 {
 	return (node->parent->right == node) ? 1 : -1;
 }
+
+
+/**
+ * Compare two pointers.
+ *   @left: The left value.
+ *   @right: The right value.
+ *   &returns: Their order.
+ */
+int avl_cmp_ptr(const void *left, const void *right)
+{
+	if(left > right)
+		return 1;
+	else if(left < right)
+		return -1;
+	else
+		return 0;
+}
+
+/**
+ * Compare two strings.
+ *   @left: The left value.
+ *   @right: The right value.
+ *   &returns: Their order.
+ */
+int avl_cmp_str(const void *left, const void *right)
+{
+	return strcmp(left, right);
+}
+
+#define MK_CMP(TY, NAM) \
+	int avl_cmp_##NAM(const void *left, const void *right) \
+	{ \
+		TY a = *(const TY *)left, b = *(const TY *)right; \
+		if(a > b) \
+			return 1; \
+		else if(a < b) \
+			return -1; \
+		else \
+			return 0; \
+	}
+
+
+MK_CMP(int,          int)
+MK_CMP(unsigned int, uint)
+MK_CMP(char,         char)
+MK_CMP(short,        short)
+MK_CMP(long,         long)
+MK_CMP(size_t,       size)
+MK_CMP(int8_t,       i8)
+MK_CMP(uint8_t,      u8)
+MK_CMP(int16_t,      i16)
+MK_CMP(uint16_t,     u16)
+MK_CMP(int32_t,      i32)
+MK_CMP(uint32_t,     u32)
+MK_CMP(int64_t,      i64)
+MK_CMP(uint64_t,     u64)
+MK_CMP(float,        float)
+MK_CMP(double,       double)

@@ -13,6 +13,11 @@ setconf()
   c_src "mdbg/mdbg.c"
 
   c_src "avl/avl.c"
+
+  h_src "emech/emech.h"
+
+  h_src "afs/afs.h"
+  c_src "afs/posix/fd.c"
 }
 ## end configuration options ##
 
@@ -24,7 +29,7 @@ opt()
 ## end custom options ##
 
 
-##### marc_andrysco configure script, rev 17 #####
+##### marc_andrysco configure script, rev 18 #####
 
 # special characters
 nl="`printf '\nX'`" ; nl="${nl%X}"
@@ -60,7 +65,7 @@ bin_target()
   chk_space "$1" || fail "bin_target parameter '$1' has spaces"
 
   target="$1"
-  install="${install}${nl}${tab}install --mode 0755 -D $1 \$(BINDIR)/$1"
+  install="${install}${nl}${tab}install --mode 0755 -CD $1 \$(BINDIR)/$1"
 }
 
 # Set the library target
@@ -73,7 +78,7 @@ lib_target()
   ldflags="$ldflags -shared"
 
   test "$windows$cygwin" && target=${1%.so}.dll || target=$1
-  install="${install}${nl}${tab}install --mode 0755 -D $target \$(LIBDIR)/$target"
+  install="${install}${nl}${tab}install --mode 0755 -CD $target \$(LIBDIR)/$target"
 }
 
 # Set the header target
@@ -84,7 +89,7 @@ hdr_target()
   chk_space "$1" || fail "hdr_target parameter '$1' has spaces"
 
   hdr="$1"
-  install="${install}${nl}${tab}install --mode 0644 -D $1 \$(INCDIR)/$1"
+  install="${install}${nl}${tab}install --mode 0644 -CD $1 \$(INCDIR)/$1"
 }
 
 # Add a header for install
@@ -95,7 +100,7 @@ hdr_install()
   chk_space "$1" || fail "hdr_install parameter '$1' has spaces"
   __hdr_install_base="`basename "$1"`"
 
-  install="${install}${nl}${tab}install --mode 0644 -D $1 \$(INCDIR)/$__hdr_install_base"
+  install="${install}${nl}${tab}install --mode 0644 -CD $1 \$(INCDIR)/$__hdr_install_base"
 }
 
 # Set the include target
@@ -164,7 +169,7 @@ share_src()
   chk_space "$2" || fail "share_src parameter '$2' has spaces"
 
   dist="$dist $1"
-  install="${install}${nl}${tab}install --mode 0644 -D $1 \$(SHAREDIR)/$2"
+  install="${install}${nl}${tab}install --mode 0644 -CD $1 \$(SHAREDIR)/$2"
 }
 
 
@@ -272,7 +277,9 @@ test "$release" && test "$debug" && fail "cannot use both --debug and --release"
 
 # delayed options
 test "$rpath" && ldflags="$ldflags -Wl,-rpath=\$(LIBDIR)"
-test "$debug" && cflags="$cflags -Werror"
+test "$debug" && cflags="$cflags -Werror -DDEBUG"
+test "$release" && cflags="$cflags -DRELEASE"
+test -z "$debug$release" && cflags="$cflags -DTEST"
 
 # build tools
 test "$toolchain" && toolchain="$toolchain-"
