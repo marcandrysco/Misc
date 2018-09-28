@@ -5,6 +5,7 @@
  * required headers
  */
 #include <stdio.h>
+#include <stdlib.h>
 
 /*
  * prototypes
@@ -44,13 +45,29 @@ int asprintf(char **, const char *restrict, ...);
  *   @err: The error value to check, exiting with an error on failure.
  */
 #define chkexit(val) \
-	do { char *_emech_tmp = val; if(_emech_tmp != NULL) { fprintf("%s\n", _emech_tmp); exit(1); } } while(0)
+	do { char *_emech_tmp = val; if(_emech_tmp != NULL) { fprintf(stderr, "%s\n", _emech_tmp); exit(1); } } while(0)
 
 /**
  * Check and exit macro.
  *   @err: The error value to check, aborting the program on failure.
  */
 #define chkabort(val) \
-	do { char *_emech_tmp = val; if(_emech_tmp != NULL) { fprintf("%s\n", _emech_tmp); abort(); } } while(0)
+	do { char *_emech_tmp = val; if(_emech_tmp != NULL) { fprintf(stderr, "%s\n", _emech_tmp); abort(); } } while(0)
+
+
+/**
+ * Unreachable macro. If `RELEASE` is defined, the compiler will optimize as
+ * if the surrounding code cannot be executed. If `RELEASE` is not defined, it
+ * prints an error and aborts. This function should never be called in normal
+ * operation.
+ */
+#ifdef RELEASE
+#	define unreachable() __builtin_unreachable();
+#else
+__attribute__((noreturn)) static inline void unreachable() {
+	fprintf(stderr, "Fatal error. Unreachable code.\n");
+	abort();
+}
+#endif
 
 #endif

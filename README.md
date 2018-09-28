@@ -16,7 +16,7 @@ noted. Any versions below 1.0 are provisional; expect breaking changes.
      Depends: AVL Tree, Error Mechanism, Memory Debugger.
  * [AVL Tree (v0.1)](avl/README.md) -- Intrusive AVL tree implementation.
  * [Error Mechanism (v0.1)](emech/README.md) -- Error reporting and
-     propagation library. Depends: Memory Debugger.
+     propagation library.
  * [Linear Algebra](lin/README.md) -- Linear algebra library.
  * [Memory Debugger (v0.1)](mdbg/README.md) -- Debugging memory bugs (e.g.
      leaked memory or double free). Depends: AVL Tree.

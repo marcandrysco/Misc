@@ -26,10 +26,17 @@ formatted error message as an allocated string.
 The checking macros check a value for an error (i.e. non-null) and performs
 the stated action.
 
-The `chkret` function calls the current fucntions `onerr` code and then
-returns the error.
+The `chkret` macro calls the current fucntions `onerr` code and then returns
+the error.
 
-The `chkexit` function prints the errors message and exits with an exit status
-of `1`.
+The `chkexit` macro prints the errors message and exits with an exit status of
+`1`.
 
-The `chkabort` function prints the errors message and aborts the program.
+The `chkabort` macro prints the errors message and aborts the program.
+
+    void unreachable()
+
+The `unreachable` macro is used to mark code that should never be reached. If
+`RELEASE` is defined, the compiler will optimize accordingly and therefore any
+code that calls `unreachable` will execute undefined. If `RELEASE` is not
+defined, an error will be printed and the program will be aborted.

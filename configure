@@ -3,21 +3,35 @@
 ## begin configuration options ##
 setconf()
 {
+  # project info
   project "misc" "0.1"
   lib_target "libmisc.so"
   hdr_target "misc.h"
 
-  #lib_dep "pthread"
+  # lib_dep "pthread"
   lib_dep "m"
 
-  c_src "mdbg/mdbg.c"
+  # skips based on platform
+  test -z "$windows" && posix="" || posix="skip"
+  test "$windows" && windows="" || windows="skip"
 
+  # avl trees
   c_src "avl/avl.c"
 
+  # error mechanism
   h_src "emech/emech.h"
 
+  # memory debugging (deps: avl)
+  c_src "mdbg/mdbg.c"
+
+  # anyfs (deps: avl, emech, mdbg)
   h_src "afs/afs.h"
   c_src "afs/posix/fd.c"
+  
+  # isys (deps: mdbg)
+  h_src "isys/isys.h"
+  c_src "isys/posix.c" $posix
+  c_src "isys/windows.c" $windows
 }
 ## end configuration options ##
 
@@ -29,7 +43,12 @@ opt()
 ## end custom options ##
 
 
-##### marc_andrysco configure script, rev 18 #####
+##### simple shell configure script, version 0.1.0 #####
+
+ver_cmp()
+{
+  test $# -ne 2 && fail "ver_cmp function takes 2 arguments"
+}
 
 # special characters
 nl="`printf '\nX'`" ; nl="${nl%X}"
@@ -116,18 +135,33 @@ inc_target()
 
 # Add a C source file to the Makefile.
 #   @path: The source path.
+#   ~skip: Do not build, but add to dist.
 c_src()
 {
-  test $# -ne 1 && fail "c_src function takes 1 argument"
+  test $# -lt 1 && fail "c_src function must take 1 argument"
   chk_space "$1" || fail "c_src parameter '$1' has spaces"
   test ${1##*.} != "c" && fail "c_src argument has invalid extension '.${1##*.}'"
 
-  obj="$obj ${1%.*}.o"
-  deps="$deps ${1%.*}.d"
-  dist="$dist $1"
-  test -z "$noinc" && hdrs="$hdrs ${1%.*}.h"
-  test -z "$noinc" && dist="$dist ${1%.*}.h"
-  test "$inc" && inc_src "${1%.*}.h"
+  __c_src_src="$1"
+  __c_src_skip=""
+  shift
+
+  for opt in "$@" ; do
+    case "$opt" in
+      "skip") __c_src_skip=1 ;;
+      *)      fail "invalid option '$opt' to c_src" ;;
+    esac
+  done
+
+  if [ -z "$__c_src_skip" ] ; then
+    obj="$obj ${__c_src_src%.*}.o"
+    deps="$deps ${__c_src_src%.*}.d"
+  fi
+
+  dist="$dist $__c_src_src"
+  test -z "$noinc" && hdrs="$hdrs ${__c_src_src%.*}.h"
+  test -z "$noinc" && dist="$dist ${__c_src_src%.*}.h"
+  test "$inc" && inc_src "${__c_src_src%.*}.h"
 }
 
 # Add a header source file to the Makefile.
