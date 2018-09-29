@@ -20,3 +20,21 @@ noted. Any versions below 1.0 are provisional; expect breaking changes.
  * [Linear Algebra](lin/README.md) -- Linear algebra library.
  * [Memory Debugger (v0.1)](mdbg/README.md) -- Debugging memory bugs (e.g.
      leaked memory or double free). Depends: AVL Tree.
+
+
+## Versioning
+
+Each version is in the form `major.minor.revision` where each component is an
+integer. This means that version `1.10.0` is a newer version that `1.2.0`. The
+meaning of the components follows
+
+  * Major: Any major change will probably break code that relies on the
+    library. There is not real "limit" to how much is different. Be prepared
+    to fix code if you update through a major change.
+  * Minor: A minor change at involves adding features to the existing code.
+    Code that depends on the library *should not* break; of course, extreme
+    cases exist, such as a client program accessing private or undocumented
+    features.
+  * Revision: A revision occurs when no APIs are added, removed, or modified.
+    Typically, this is reserved for bug fixes, refactoring, or documentation
+    changes.

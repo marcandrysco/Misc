@@ -11,6 +11,16 @@
 
 
 /**
+ * Retrive the parent data structure from a member pointer.
+ *   @ptr: The member poitner.
+ *   @type: The parent type.
+ *   @member: The member identifier.
+ *   &returns: The parent pointer.
+ */
+#define avl_getparent(ptr, type, member) ((type *)((void *)(ptr) - offsetof(type, member)))
+
+
+/**
  * Delete function.
  *   @ptr: The pointer.
  */

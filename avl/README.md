@@ -1,15 +1,22 @@
 AVL Tree
 ========
 
+This library provides a basic intrusive AVL tree implementation. By intrusive,
+the API allows you to create and link nodes together but does not actually
+store data at each node. Instead, the tree structures are placed inside
+another element that contains the useful data. Looking at examples are the
+best way to understand how this works.
+
 Tables of Contents
-  * 1. API
-  * 1a. Tree Root
-  * 1b. Tree Node
-  * 1c. Comparison Functions
-  * 2. Examples
-  * 2a. Ex1: Raw Structures
-  * 2b. Ex2: Roster the Hard Way
-  * 2c. Ex3: Roster the Easy Way 
+  * 1\. API
+  * 1a\. Tree Root
+  * 1b\. Tree Node
+  * 1c\. Comparison Functions
+  * 1d\. Helper Macros
+  * 2\. Examples
+  * 2a\. Ex1: Raw Structures
+  * 2b\. Ex2: Roster the Hard Way
+  * 2c\. Ex3: Roster the Easy Way 
 
 
 ## 1. API
@@ -100,7 +107,18 @@ The above `avl_cmp_#TYPE#` functions compares values of a given type. The
 dereferences for comparison (e.g. `*(int *)left < *(int *)right`).
 
 
+### 1d. Helper Macros
+
+    #define avl_getparent(ptr, type, member)
+
+The `avl_getparent` takes a pointer to a `member` of a structure `type`. As an
+example on `struct user_t { char *name; int id };`, given a pointer to the id
+`int *id_ptr`, the `avl_getparent` macro retrieves a pointer to the `user_t`
+structure by calling `avl_getparent(id_ptr, struct user_t, id)`.
+
+
 ## 2. Examples
+
 
 ### 2a. Ex1: Raw Structures
 

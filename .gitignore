@@ -9,6 +9,9 @@
 
 misc.h
 config.h
+
+/COMMIT
 /Makefile
 
 build/w64
+
