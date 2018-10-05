@@ -20,6 +20,8 @@ noted. Any versions below 1.0 are provisional; expect breaking changes.
  * [Linear Algebra](lin/README.md) -- Linear algebra library.
  * [Memory Debugger (v0.1)](mdbg/README.md) -- Debugging memory bugs (e.g.
      leaked memory or double free). Depends: AVL Tree.
+ * [Shell Configure (v1.0.0a)](shellconf/README.md) -- A portable shell
+     configure script aimed at C programs.
 
 
 ## Versioning
@@ -38,3 +40,7 @@ meaning of the components follows
   * Revision: A revision occurs when no APIs are added, removed, or modified.
     Typically, this is reserved for bug fixes, refactoring, or documentation
     changes.
+
+An additional 'a', 'b', or 'rc#' may be added to the end to denote alpha,
+beta, or release candidate. These are not full releases so they do not need to
+obey the above rules.

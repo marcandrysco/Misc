@@ -1,7 +1,8 @@
-#include "isys.h"
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
+#include "isys.h"
+#include "../mdbg/mdbg.h"
 
 
 /**
@@ -64,4 +65,32 @@ bool isys_mutex_trylock(struct isys_mutex_t *mutex)
 void isys_mutex_unlock(struct isys_mutex_t *mutex)
 {
 	LeaveCriticalSection(&mutex->crit);
+}
+
+
+/**
+ * Event structure.
+ *   @handle: The handle.
+ */
+struct isys_event_t {
+	HANDLE handle;
+};
+
+struct isys_event_t *isys_event_new(void)
+{
+	struct isys_event_t *event;
+
+	event = malloc(sizeof(struct isys_event_t));
+
+	return event;
+}
+
+/**
+ * Delete an event.
+ *   @event: The event.
+ */
+void isys_event_delete(struct isys_event_t *event)
+{
+	CloseHandle(event->handle);
+	free(event);
 }

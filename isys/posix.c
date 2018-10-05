@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/eventfd.h>
+#include <unistd.h>
 
 #include "isys.h"
 #include "../mdbg/mdbg.h"
@@ -21,7 +23,7 @@ struct isys_thread_t {
 };
 
 /**
- * Create a mutex.
+ * Create a thread.
  *   @func: The function.
  *   @arg: The argument.
  *   &returns: The mutex.
@@ -117,6 +119,41 @@ bool isys_mutex_trylock(struct isys_mutex_t *mutex)
 void isys_mutex_unlock(struct isys_mutex_t *mutex)
 {
 	chk(pthread_mutex_unlock(&mutex->pthrd), "Failed to unlock mutex.");
+}
+
+
+/**
+ * Event structure.
+ *   @fd: The file descriptor.
+ */
+struct isys_event_t {
+	int fd;
+};
+
+/**
+ * Create an event.
+ *   &returns: The event.
+ */
+struct isys_event_t *isys_event_new(void)
+{
+	struct isys_event_t *event;
+
+	event = malloc(sizeof(struct isys_event_t));
+	event->fd = eventfd(0, 0);
+	if(event->fd < 0)
+		fatal("Cannot create event file descriptor.");
+
+	return event;
+}
+
+/**
+ * Delete the event.
+ *   @event: The event.
+ */
+void isys_event_delete(struct isys_event_t *event)
+{
+	close(event->fd);
+	free(event);
 }
 
 

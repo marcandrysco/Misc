@@ -27,4 +27,7 @@ void isys_mutex_lock(isys_mutex_t mutex);
 bool isys_mutex_trylock(isys_mutex_t mutex);
 void isys_mutex_unlock(isys_mutex_t mutex);
 
+/*
+ * event declarations
+ */
 #endif
