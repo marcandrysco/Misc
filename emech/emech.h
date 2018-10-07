@@ -27,10 +27,10 @@ int asprintf(char **, const char *restrict, ...);
 	_emech_after: \
 
 /**
- * Throw macro.
+ * Fail macro, calling the `onerr` code and returning the error message.
  *   @...: The printf-style format and arguments.
  */
-#define throw(...) \
+#define fail(...) \
 	do { if(asprintf(&_emech_error, __VA_ARGS__) < 0) { fprintf(stderr, "cannot allocate string\n"); abort(); }; goto _emech_return; } while(0)
 
 /**

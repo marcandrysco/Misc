@@ -33,7 +33,7 @@ char *io_fd_open(io_fd_t *fd, const char *path, uint32_t flags, uint32_t mode)
 		conv |= O_RDWR;
 
 	if(open(path, conv, mode) < 0)
-		throw("Cannot open '%s' for writing. %s.", path, strerror(errno));
+		fail("Cannot open '%s' for writing. %s.", path, strerror(errno));
 
 	return NULL;
 }
@@ -58,7 +58,7 @@ char *io_file_open(io_file_t *file, const char *path, uint32_t mode)
 {
 	onerr( free(file); );
 
-	throw("hi");
+	fail("hi");
 
 	return NULL;
 }

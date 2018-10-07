@@ -6,17 +6,30 @@ string errors. To ease resource management, the macros leverage user-defined
 values to automatically insert resource freeing code on errors.
 
 
+## Error Architecture
+
+The Error Mechanism header intended only for string-based error messages. Each
+message is allocated on the heap so they must be `free`d in order to prevent
+memory leaks.
+
+Errors are expected to be returned by functions such that the return type of
+each function is `char *`. Success is indicated by a `NULL` value. Errors are
+created by the `fail` macro that executes the `onerr` code and returns from
+the function. The caller is expected to handle any possible errors by using
+the `chk#action#` macros.
+
+
 ## Macro API
 
     #define onerr(CODE)
 
 The `onerr` macro prepares the failure handler. All code given by `CODE` will
-be run in event of an error that is thrown via `throw` or propagated via
+be run in event of an error that is generated via `fail` or propagated via
 `chkret`.
 
-    #define throw(fmt, ...)
+    #define fail(fmt, ...)
 
-The `throw` macro executes the cleanup code given by `onerr` and returns the
+The `fail` macro executes the cleanup code given by `onerr` and returns the
 formatted error message as an allocated string.
 
     #define chkret(val)
