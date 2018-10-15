@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+#include "windows.h"
 #include "isys.h"
 #include "../mdbg/mdbg.h"
 
@@ -76,11 +77,16 @@ struct isys_event_t {
 	HANDLE handle;
 };
 
+/**
+ * Create an event.
+ *   &returns: The event.
+ */
 struct isys_event_t *isys_event_new(void)
 {
 	struct isys_event_t *event;
 
 	event = malloc(sizeof(struct isys_event_t));
+	event->handle = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	return event;
 }

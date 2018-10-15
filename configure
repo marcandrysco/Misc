@@ -41,9 +41,9 @@ setconf()
   c_src "afs/posix/fd.c"
   
   # isys (deps: mdbg)
-  c_src "isys/isys.c"
   c_src "isys/posix.c" $posix
   c_src "isys/windows.c" $windows
+  c_src "isys/isys.c"
 }
 ## end configuration options ##
 

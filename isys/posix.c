@@ -1,3 +1,4 @@
+#include <poll.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,6 +6,7 @@
 #include <sys/eventfd.h>
 #include <unistd.h>
 
+#include "posix.h"
 #include "isys.h"
 #include "../mdbg/mdbg.h"
 
@@ -33,7 +35,7 @@ struct isys_thread_t *isys_thread_new(void *(*func)(void *), void *arg)
 	struct isys_thread_t *thread;
 	
 	thread = malloc(sizeof(struct isys_thread_t));
-	//chk(pthread_thread_init(&thread->pthrd, NULL), "Failed to create thread.");
+	//chk(pthread_thread_create(&thread->pthrd, NULL), "Failed to create thread.");
 
 	return thread;
 }
@@ -154,6 +156,89 @@ void isys_event_delete(struct isys_event_t *event)
 {
 	close(event->fd);
 	free(event);
+}
+
+
+/**
+ * Retrieve the file descriptor for the event.
+ *   @event: The event.
+ *   &returns: THe file descriptor.
+ */
+isys_fd_t isys_event_fd(struct isys_event_t *event)
+{
+	return event->fd;
+}
+
+/**
+ * Signal an event.
+ *   @event: The event.
+ */
+void isys_event_signal(struct isys_event_t *event)
+{
+	uint64_t val = 1;
+
+	if(write(event->fd, &val, 8) < 0)
+		fatal("Cannot write to event file descriptor. %s.", strerror(errno));
+}
+
+/**
+ * Reset an event.
+ *   @event: The event.
+ */
+void isys_event_reset(struct isys_event_t *event)
+{
+	uint64_t val;
+
+	if(read(event->fd, &val, 8) < 0)
+		fatal("Cannot read from event file descriptor. %s.", strerror(errno));
+}
+
+/**
+ * Wait on an event.
+ *   @event: The event.
+ */
+void isys_event_wait(struct isys_event_t *event)
+{
+	uint64_t val;
+
+	if(read(event->fd, &val, 8) < 0)
+		fatal("Cannot read from event file descriptor. %s.", strerror(errno));
+}
+
+
+/**
+ * Asynchronously poll files.
+ *   @fds: The file descriptor set.
+ *   @cnt: The size of the set.
+ *   @timeout: The timeout in milliseconds. Negative waits forever.
+ *   &returns: True if on file wakeup, false on timeout.
+ */
+bool isys_poll(struct isys_poll_t *fds, unsigned int cnt, int timeout)
+{
+	int err;
+	unsigned int i;
+	struct pollfd set[cnt];
+
+	for(i = 0; i < cnt; i++) {
+		set[i].fd = fds[i].fd;
+		set[i].events = 0;
+		set[i].events |= (fds[i].mask & ISYS_READ) ? POLLIN : 0;
+		set[i].events |= (fds[i].mask & ISYS_WRITE) ? POLLOUT : 0;
+		set[i].events |= (fds[i].mask & ISYS_ERROR) ? POLLERR : 0;
+	}
+
+	do
+		err = poll(set, cnt, timeout);
+	while((err < 0) && (errno == EINTR));
+
+	for(i = 0; i < cnt; i++) {
+		fds[i].got = 0;
+		fds[i].got |= (set[i].revents & POLLIN) ? ISYS_READ : 0;
+		fds[i].got |= (set[i].revents & POLLOUT) ? ISYS_WRITE : 0;
+		fds[i].got |= (set[i].revents & POLLERR) ? ISYS_ERROR : 0;
+	}
+
+	return err > 0;
 }
 
 

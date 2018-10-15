@@ -1,18 +1,30 @@
-#include "isys.h"
+#ifdef WINDOWS
+#	include "windows.h"
+#else
+#	include "posix.h"
+#endif
 
-#if 0
+#include "isys.h"
+#include "../mdbg/mdbg.h"
+
+
 /**
  * Task structure.
- *   @sync, thread: The synchronization and thread handles.
  *   @func: The task function.
  *   @arg: The argument.
  */
 struct isys_task_t {
-	sync, thread;
+	struct isys_thread_t *thread;
+	struct isys_event_t *event;
 
-	sys_task_f func;
+	void (*func)(isys_fd_t, void *);
 	void *arg;
 };
+
+/*
+ * local declarations
+ */
+static void *task_proc(void *arg);
 
 
 /**
@@ -21,15 +33,15 @@ struct isys_task_t {
  *   @arg: The argument.
  *   &returns: The task.
  */
-struct sys_task_t *sys_task_new(sys_task_f func, void *arg)
+struct isys_task_t *isys_task_new(void (*func)(isys_fd_t, void *), void *arg)
 {
-	struct sys_task_t *task;
+	struct isys_task_t *task;
 
-	task = malloc(sizeof(struct sys_task_t));
+	task = malloc(sizeof(struct isys_task_t));
 	task->func = func;
 	task->arg = arg;
-	task->sync = CreateEvent(NULL, TRUE, FALSE, NULL);
-	task->thread = CreateThread(NULL, 0, task_proc, task, 0, NULL);
+	task->event = isys_event_new();
+	task->thread = isys_thread_new(task_proc, task);
 
 	return task;
 }
@@ -38,12 +50,11 @@ struct sys_task_t *sys_task_new(sys_task_f func, void *arg)
  * Delete a task.
  *   @task: The task.
  */
-void sys_task_delete(struct sys_task_t *task)
+void isys_task_delete(struct isys_task_t *task)
 {
-	SetEvent(task->sync);
-	WaitForSingleObject(task->thread, INFINITE);
-	CloseHandle(task->sync);
-	CloseHandle(task->thread);
+	isys_event_signal(task->event);
+	isys_thread_join(task->thread);
+	isys_event_delete(task->event);
 	free(task);
 }
 
@@ -52,12 +63,11 @@ void sys_task_delete(struct sys_task_t *task)
  *   @arg: The argument.
  *   &returns: Always zero.
  */
-static DWORD task_proc(LPVOID arg)
+static void *task_proc(void *arg)
 {
-	struct sys_task_t *task = arg;
+	struct isys_task_t *task = arg;
 
-	task->func(w32_fd(task->sync), task->arg);
+	task->func(isys_event_fd(task->event), task->arg);
 
-	return 0;
+	return NULL;
 }
-#endif
