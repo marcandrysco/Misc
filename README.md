@@ -18,6 +18,8 @@ noted. Any versions below 1.0 are provisional; expect breaking changes.
  * [Error Mechanism (v0.1)](emech/README.md) -- Error reporting and
      propagation library.
  * [Linear Algebra](lin/README.md) -- Linear algebra library.
+ * [Memory Buffer](membuf/README.md) -- Memory (or string) buffering library.
+     Depends: Memory Debugger.
  * [Memory Debugger (v0.1)](mdbg/README.md) -- Debugging memory bugs (e.g.
      leaked memory or double free). Depends: AVL Tree.
  * [Shell Configure (v1.0.0a)](shellconf/README.md) -- A portable shell

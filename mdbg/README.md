@@ -3,8 +3,8 @@ Memory Debugging
 
 The memory debugging tools replace all memory allocation calls (e.g. `malloc`
 and `free`) with calls to the debugger's verions (e.g. `mdbg_malloc` and
-`mdbg_free`). The debugger functions provide mechanisms discovering memory
-leaks, detecting use-after-free, and heap buffer overflows/underflows.
+`mdbg_free`). The debugger functions provide meothods for discovering memory
+leaks, use-after-free, and buffer overflows/underflows on the heap.
 
 
 ## Debugging Levels

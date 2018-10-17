@@ -104,6 +104,79 @@ void *mdbg_malloc_debug(size_t size)
 }
 
 
+/**
+ * Base version of realloc.
+ *   @ptr: The pointer.
+ *   @size: The size.
+ *   &returns: The reallocated pointer.
+ */
+void *mdbg_realloc(void *ptr, size_t size)
+{
+#ifdef RELEASE
+	return mdbg_realloc_release(ptr, size);
+#elif TEST
+	return mdbg_realloc_test(ptr, size);
+#elif DEBUG
+	return mdbg_realloc_debug(ptr, size);
+#else
+#	error "Must define one of 'RELEASE', 'TEST', or 'DEBUG'."
+#endif
+}
+
+/**
+ * Release version of free.
+ *   @ptr: The pointer.
+ *   @size: The size.
+ *   &returns: The reallocated pointer.
+ */
+void *mdbg_realloc_release(void *ptr, size_t size)
+{
+	if(ptr == NULL) {
+		fprintf(stderr, "attempted to realloc null pointer\n");
+		abort();
+	}
+
+	return realloc(ptr, size);
+}
+
+/**
+ * Test version of realloc.
+ *   @ptr: The pointer.
+ *   @size: The size.
+ *   &returns: The reallocated pointer.
+ */
+void *mdbg_realloc_test(void *ptr, size_t size)
+{
+	return mdbg_realloc_release(ptr, size);
+}
+
+/**
+ * Debug version of realloc.
+ *   @ptr: The pointer.
+ *   @size: The size.
+ *   &returns: The reallocated pointer.
+ */
+void *mdbg_realloc_debug(void *ptr, size_t size)
+{
+	size_t chksize;
+
+	ptr -= 16;
+
+	chksize = *(uint64_t *)ptr;
+	chk(*(uint64_t *)(ptr + 8) == (uint64_t)(ptr + 8) * 4221379234814892313ul);
+	chk(*(uint64_t *)(ptr + 16 + chksize + 0) == (uint64_t)(ptr + 16 + 0) * 4221379234814892313ul);
+	chk(*(uint64_t *)(ptr + 16 + chksize + 8) == (uint64_t)(ptr + 16 + 8) * 4221379234814892313ul);
+
+	ptr = mdbg_realloc_test(ptr, 32 + size);
+
+	*(uint64_t *)(ptr + 0) = (uint64_t)size;
+	*(uint64_t *)(ptr + 8) = (uint64_t)(ptr + 8) * 4221379234814892313ul;
+	*(uint64_t *)(ptr + 16 + size + 0) = (uint64_t)(ptr + 16 + 0) * 4221379234814892313ul;
+	*(uint64_t *)(ptr + 16 + size + 8) = (uint64_t)(ptr + 16 + 8) * 4221379234814892313ul;
+
+	return ptr + 16;
+}
+
 
 /**
  * Base version of free.

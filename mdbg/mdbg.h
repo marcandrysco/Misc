@@ -25,6 +25,11 @@ void *mdbg_malloc_release(size_t size);
 void *mdbg_malloc_test(size_t size);
 void *mdbg_malloc_debug(size_t size);
 
+void *mdbg_realloc(void *ptr, size_t size);
+void *mdbg_realloc_release(void *ptr, size_t size);
+void *mdbg_realloc_test(void *ptr, size_t size);
+void *mdbg_realloc_debug(void *ptr, size_t size);
+
 void mdbg_free(void *ptr);
 void mdbg_free_release(void *ptr);
 void mdbg_free_test(void *ptr);
@@ -33,22 +38,6 @@ void mdbg_free_debug(void *ptr);
 char *mdbg_mprintf(const char *restrict fmt, ...) __attribute__ ((format (printf, 1, 2)));
 char *mdbg_vmprintf(const char *restrict fmt, va_list args);
 
-
-
-/**
- * Reallocate memory.
- *   @ptr: The pointer.
- *   @size: The size.
- *   &returns: The reallocated pointer.
- */
-static inline void *mdbg_realloc(void *ptr, size_t size)
-{
-	ptr = realloc(ptr, size ?: 1);
-	if(ptr == NULL)
-		fprintf(stderr, "allocation failed, %s\n", strerror(errno));
-
-	return ptr;
-}
 
 /**
  * Debugged duplicate memory.

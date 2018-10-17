@@ -12,14 +12,17 @@ The Error Mechanism header intended only for string-based error messages. Each
 message is allocated on the heap so they must be `free`d in order to prevent
 memory leaks.
 
-Errors are expected to be returned by functions such that the return type of
-each function is `char *`. Success is indicated by a `NULL` value. Errors are
+Errors are expected to be returned by functions, and the return type of each
+function is `char *`. Success is indicated by a `NULL` value. Errors are
 created by the `fail` macro that executes the `onerr` code and returns from
 the function. The caller is expected to handle any possible errors by using
 the `chk#action#` macros.
 
 
 ## Macro API
+
+All functionality is provided through safe macros -- all arguments will only
+be executed once.
 
     #define onerr(CODE)
 
