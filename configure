@@ -56,7 +56,7 @@ setconf()
   
   # net (deps: mdbg, isys)
   #c_src "net/isys.c"
-  c_src "net/posix.c" $pskip
+  #c_src "net/posix.c" $pskip
   #c_src "net/windows.c" $wskip
 }
 ## end configuration options ##
