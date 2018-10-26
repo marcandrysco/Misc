@@ -269,10 +269,10 @@ char *mdbg_vmprintf(const char *restrict fmt, va_list args)
 	va_list copy;
 
 	va_copy(copy, args);
-	len = vsnprintf(NULL, 0, fmt, args);
+	len = vsnprintf(NULL, 0, fmt, copy);
 	va_end(copy);
 
-	str = malloc(len + 1);
+	str = mdbg_malloc(len + 1);
 	vsprintf(str, fmt, args);
 
 	return str;

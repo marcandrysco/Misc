@@ -18,6 +18,9 @@ noted. Any versions below 1.0 are provisional; expect breaking changes.
  * [Error Mechanism (v0.1)](emech/README.md) -- Error reporting and
      propagation library.
  * [Linear Algebra](lin/README.md) -- Linear algebra library.
+ * [Lexigraphical Parser](lex/README.md) -- Parser for converting an input
+     stream to lexemes. Depends: AVL Tree, Error Mechanism, Memory Buffer,
+     Memory Debugger.
  * [Memory Buffer](membuf/README.md) -- Memory (or string) buffering library.
      Depends: Memory Debugger.
  * [Memory Debugger (v0.1)](mdbg/README.md) -- Debugging memory bugs (e.g.

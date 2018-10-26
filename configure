@@ -21,8 +21,11 @@ setconf()
   fi
 
   # skips based on platform
-  test -z "$windows" && posix="" || posix="skip"
-  test "$windows" && windows="" || windows="skip"
+  test -z "$windows" && { pskip="" ; wskip="skip" ; }
+  test "$windows" && { pskip="skip" ; wskip="" ; }
+
+  echo "pskip: $pskip"
+  echo "wskip: $wskip"
 
   # inline header
   h_src "inline/inline.h"
@@ -39,19 +42,22 @@ setconf()
   # memory buffer (deps: mdbg)
   c_src "membuf/membuf.c"
 
+  # anyfs (deps: emech, mdbg, membuf)
+  c_src "lex/lex.c"
+
   # anyfs (deps: avl, emech, mdbg)
   h_src "afs/afs.h"
   c_src "afs/posix/fd.c"
   
   # isys (deps: mdbg)
-  c_src "isys/posix.c" $posix
-  c_src "isys/windows.c" $windows
+  c_src "isys/posix.c" $pskip
+  c_src "isys/windows.c" $wskip
   c_src "isys/isys.c"
   
   # net (deps: mdbg, isys)
   #c_src "net/isys.c"
-  c_src "net/posix.c" $posix
-  #c_src "net/windows.c" $windows
+  c_src "net/posix.c" $pskip
+  #c_src "net/windows.c" $wskip
 }
 ## end configuration options ##
 
@@ -63,7 +69,7 @@ opt()
 ## end custom options ##
 
 
-##### simple shell configure script, version 1.0.0a #####
+##### simple shell configure script, version 1.0.1a #####
 
 # special characters
 nl="`printf '\nX'`" ; nl="${nl%X}"
@@ -198,12 +204,12 @@ c_src()
   if [ -z "$__c_src_skip" ] ; then
     obj="$obj ${__c_src_src%.*}.o"
     deps="$deps ${__c_src_src%.*}.d"
+    hdrs="$hdrs ${__c_src_src%.*}.h"
+    inc_src "${__c_src_src%.*}.h"
   fi
 
   dist="$dist $__c_src_src"
-  test -z "$noinc" && hdrs="$hdrs ${__c_src_src%.*}.h"
   test -z "$noinc" && dist="$dist ${__c_src_src%.*}.h"
-  test "$inc" && inc_src "${__c_src_src%.*}.h"
 }
 
 # Add a header source file to the Makefile.
@@ -233,7 +239,7 @@ inc_src()
     path=${path#*/} ; rem=${rem#*/}
   done
 
-  printf "#include \"%s\"\n" "$path" >> "$inc"
+  test "$inc" && printf "#include \"%s\"\n" "$path" >> "$inc"
 }
 
 # Add an asset to the share directory.
