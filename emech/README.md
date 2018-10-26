@@ -38,6 +38,8 @@ formatted error message as an allocated string.
     #define chkret(val)
     #define chkexit(val)
     #define chkabort(val)
+    #define chkbool(val)
+    #define chkwarn(val)
 
 The checking macros check a value for an error (i.e. non-null) and performs
 the stated action.
@@ -50,9 +52,21 @@ The `chkexit` macro prints the errors message and exits with an exit status of
 
 The `chkabort` macro prints the errors message and aborts the program.
 
+The `chkbool` macro converts the error message into a simple boolean where
+true indicates success and false indicates failure. Any error message is
+automatically freed.
+
+The `chkwarn` macro is identical to `chkbool` by returning a boolean that
+indicates success, except that an error message will be printed. Any error
+message is automatically freed.
+
     void unreachable()
 
 The `unreachable` macro is used to mark code that should never be reached. If
 `RELEASE` is defined, the compiler will optimize accordingly and therefore any
 code that calls `unreachable` will execute undefined. If `RELEASE` is not
 defined, an error will be printed and the program will be aborted.
+
+
+## Examples
+

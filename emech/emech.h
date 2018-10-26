@@ -4,6 +4,7 @@
 /*
  * required headers
  */
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -48,12 +49,27 @@ int asprintf(char **, const char *restrict, ...);
 	do { char *_emech_tmp = val; if(_emech_tmp != NULL) { fprintf(stderr, "%s\n", _emech_tmp); exit(1); } } while(0)
 
 /**
- * Check and exit macro.
+ * Check and abort macro.
  *   @err: The error value to check, aborting the program on failure.
  */
 #define chkabort(val) \
 	do { char *_emech_tmp = val; if(_emech_tmp != NULL) { fprintf(stderr, "%s\n", _emech_tmp); abort(); } } while(0)
 
+/**
+ * Check and convert to bool macro.
+ *   @err: The error value to check, aborting the program on failure.
+ *   &returns: True if successful, false on failure.
+ */
+#define chkbool(val) \
+	({ char *_emech_tmp = val; if(_emech_tmp != NULL) free(_emech_tmp); _emech_tmp != NULL; })
+
+/**
+ * Check and convert to bool macro, printing a warning on failure.
+ *   @err: The error value to check, aborting the program on failure.
+ *   &returns: True if successful, false on failure.
+ */
+#define chkwarn(val) \
+	({ char *_emech_tmp = val; if(_emech_tmp != NULL) { fprintf(stderr, "%s\n", _emech_tmp); free(_emech_tmp); } _emech_tmp != NULL; })
 
 /**
  * Unreachable macro. If `RELEASE` is defined, the compiler will optimize as
