@@ -67,6 +67,14 @@ static inline char *mdbg_strdup(const char *str)
 
 
 /*
+ * fallback definitions
+ */
+static inline void *c_malloc(size_t nbytes) { return malloc(nbytes); }
+static inline void *c_realloc(void *ptr, size_t nbytes) { return realloc(ptr, nbytes); }
+static inline void c_free(void *ptr) { free(ptr); }
+
+
+/*
  * redefine symbols
  */
 #ifndef MDBG_NO_RENAME

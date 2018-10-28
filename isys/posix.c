@@ -19,6 +19,7 @@ static inline void chk(int err, const char *msg);
 
 /**
  * Thread structure.
+ *   @pthrd: The POSIX thread.
  */
 struct isys_thread_t {
 	pthread_t pthrd;

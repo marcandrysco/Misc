@@ -17,6 +17,8 @@ noted. Any versions below 1.0 are provisional; expect breaking changes.
  * [AVL Tree (v0.1)](avl/README.md) -- Intrusive AVL tree implementation.
  * [Error Mechanism (v0.1)](emech/README.md) -- Error reporting and
      propagation library.
+ * [Inlines Header](inline/README.md) -- Header of small, inlined functions
+     and macros.
  * [Linear Algebra](lin/README.md) -- Linear algebra library.
  * [Lexigraphical Parser](lex/README.md) -- Parser for converting an input
      stream to lexemes. Depends: AVL Tree, Error Mechanism, Memory Buffer,

@@ -48,6 +48,11 @@ setconf()
   # anyfs (deps: avl, emech, mdbg)
   h_src "afs/afs.h"
   c_src "afs/posix/fd.c"
+
+  # ifs (deps: mdbg)
+  c_src "ifs/posix.c" $pskip
+  c_src "ifs/windows.c" $wskip
+  c_src "ifs/ifs.c"
   
   # isys (deps: mdbg)
   c_src "isys/posix.c" $pskip

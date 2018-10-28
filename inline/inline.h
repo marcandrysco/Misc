@@ -17,6 +17,12 @@
  */
 #define getparent(ptr, type, member) ((type *)((void *)(ptr) - offsetof(type, member)))
 
+
+/**
+ * Zero memory.
+ *   @ptr: The destination pointer.
+ *   @size: The size in bytes.
+ */
 static inline void memzero(void *ptr, size_t size)
 {
 	memset(ptr, 0x00, size);

@@ -90,6 +90,19 @@ The `mdbg_fatal` function writes a formatted message to `stderr` and
 terminates the program with `abort`.
 
 
+### Bypassing Memory Debugging
+
+Because we have redefined the symbols for calling the standard memory
+function, we also provide direct calls to them using alternate functions.
+
+    inline void *c_malloc(size_t nbytes)
+    inline void *c_realloc(void *ptr, size_t nbytes)
+    inline void c_free(void *ptr)
+
+The `c_malloc`, `c_realloc`, and `c_free` directly call the standard library
+allocation, reallocation, and free functions.
+
+
 ### Redefining Symbols
 
 For ease of use, the symbols to the standard library calls (e.g. `malloc`) are
