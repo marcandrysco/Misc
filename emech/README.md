@@ -64,8 +64,8 @@ message is automatically freed.
 
 The `unreachable` macro is used to mark code that should never be reached. If
 `RELEASE` is defined, the compiler will optimize accordingly and therefore any
-code that calls `unreachable` will execute undefined. If `RELEASE` is not
-defined, an error will be printed and the program will be aborted.
+code that calls `unreachable` will be undefined. If `RELEASE` is not defined,
+an error will be printed and the program will be aborted.
 
 
 ## Examples

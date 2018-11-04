@@ -9,6 +9,26 @@
 
 
 /**
+ * Poll a single file descriptor.
+ *   @fd: The file descriptor.
+ *   @mask: The event mask.
+ *   @timeout: The timeout.
+ *   &returns: The received mask.
+ */
+uint16_t isys_poll1(isys_fd_t fd, uint16_t mask, int timeout)
+{
+	struct isys_poll_t poll;
+
+	poll.fd = fd;
+	poll.mask = mask;
+
+	isys_poll(&poll, 1, timeout);
+
+	return poll.got;
+}
+
+
+/**
  * Task structure.
  *   @func: The task function.
  *   @arg: The argument.

@@ -33,24 +33,50 @@ struct isys_thread_t {
  */
 struct isys_thread_t *isys_thread_new(void *(*func)(void *), void *arg)
 {
+	int err;
 	struct isys_thread_t *thread;
 	
 	thread = malloc(sizeof(struct isys_thread_t));
-	//chk(pthread_thread_create(&thread->pthrd, NULL), "Failed to create thread.");
+
+	err = pthread_create(&thread->pthrd, NULL, func, arg);
+	if(err != 0)
+		fatal("Failed to create thread. %s.", strerror(errno));
 
 	return thread;
 }
 
+/**
+ * Detach from a thread.
+ *   @thread: The thread.
+ */
 void isys_thread_detach(struct isys_thread_t *thread)
 {
+	int err;
+
+	err = pthread_detach(thread->pthrd);
+	if(err != 0)
+		fatal("Failed to join thread. %s.", strerror(errno));
+
 	free(thread);
 }
 
+/**
+ * Detach join a thread.
+ *   @thread: The thread.
+ *   &returns: The thread exit value.
+ */
 void *isys_thread_join(struct isys_thread_t *thread)
 {
+	int err;
+	void *ptr;
+
+	err = pthread_join(thread->pthrd, &ptr);
+	if(err != 0)
+		fatal("Failed to join thread. %s.", strerror(errno));
+
 	free(thread);
 
-	return NULL;
+	return ptr;
 }
 
 

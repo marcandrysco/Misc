@@ -27,6 +27,15 @@ int mdbg_cnt = 0;
  */
 void mdbg_check(void)
 {
+	if(mdbg_cnt != 0)
+		fprintf(stderr, "missed %d allocations\n", mdbg_cnt);
+}
+
+/**
+ * Check for any memory leaks.
+ */
+void mdbg_assert(void)
+{
 	if(mdbg_cnt != 0) {
 		fprintf(stderr, "missed %d allocations\n", mdbg_cnt);
 #ifndef RELEASE

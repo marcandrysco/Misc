@@ -18,7 +18,7 @@ extern int mdbg_cnt;
  * function declarations
  */
 void mdbg_check(void);
-__attribute__((noreturn)) void mdbg_fatal(const char *restrict fmt, ...);
+void mdbg_assert(void);
 
 void *mdbg_malloc(size_t size);
 void *mdbg_malloc_release(size_t size);
@@ -37,6 +37,7 @@ void mdbg_free_debug(void *ptr);
 
 char *mdbg_mprintf(const char *restrict fmt, ...) __attribute__ ((format (printf, 1, 2)));
 char *mdbg_vmprintf(const char *restrict fmt, va_list args);
+__attribute__((noreturn)) void mdbg_fatal(const char *restrict fmt, ...);
 
 
 /**

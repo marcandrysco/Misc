@@ -51,6 +51,15 @@ an allocation of `size` bytes.
 The `mdbg_strdup` function corresponds to the standard library function
 `strdup`.
 
+    void mdbg_check(void);
+    void mdbg_assert(void);
+
+The `mdbg_check` function checks if there are any outstanding allocations,
+printing a message if any exist.
+
+The `mdbg_assert` function checks if there are any outstanding allocations. If
+`RELEASE` is not defined, the program will abort if any exist.
+
 
 ### Internal Functions
 

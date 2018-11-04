@@ -10,9 +10,10 @@
 /*
  * poll mask definitions
  */
-#define ISYS_READ  0x01
-#define ISYS_WRITE 0x02
-#define ISYS_ERROR 0x04
+#define ISYS_READ  (0x01)
+#define ISYS_WRITE (0x02)
+#define ISYS_ERROR (0x04)
+#define ISYS_ALL   (0x07)
 
 /**
  * Poll structure.
@@ -23,6 +24,7 @@ struct isys_poll_t {
 	isys_fd_t fd;
 	uint16_t mask, got;
 };
+#define isys_pollfd(fd, mask) ((struct isys_poll_t){ fd, mask, 0 })
 
 
 /*
@@ -58,21 +60,10 @@ void isys_event_reset(struct isys_event_t *event);
 void isys_event_wait(struct isys_event_t *event);
 
 /*
- * poll declarations
+ * polling declarations
  */
 bool isys_poll(struct isys_poll_t *fds, unsigned int cnt, int timeout);
-
-static inline uint16_t isys_poll1(isys_fd_t fd, uint16_t mask, int timeout)
-{
-	struct isys_poll_t poll;
-
-	poll.fd = fd;
-	poll.mask = mask;
-
-	isys_poll(&poll, 1, timeout);
-
-	return poll.got;
-}
+uint16_t isys_poll1(isys_fd_t fd, uint16_t mask, int timeout);
 
 /*
  * task declarations

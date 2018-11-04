@@ -24,6 +24,24 @@ API if you need that level of control.
 
 ### Threads
 
+Basic threading support is given by binding to the system APIs. In the case of
+Windows, a little extra work is used to create a consistent interface between
+platforms. If you require more control over the threading, use the system APIs
+instead.
+
+    isys_thread_t isys_thread_new(void *(*func)(void *), void *arg);
+    void isys_thread_detach(isys_thread_t thread);
+    void *isys_thread_join(isys_thread_t thread);
+
+The `isys_thread_new` function creates a new thread, calling `func` with
+`arg`.
+
+The `isys_thread_detach` function stops tracking the `thread`, reaping all
+resources whenever the thead exits.
+
+The `isys_thread_join` function waits of the thread to exit and retrieves
+the value returned by the thread.
+
 
 ### Mutexes
 
@@ -53,7 +71,20 @@ The `isys_mutex_lock` function locks the mutex.
 The `isys_mutex_unlock` function unlocks the mutex.
 
 
-### Tasks
-
-
 ### Polling
+
+    struct isys_poll_t {
+      isys_fd_t fd;
+      uint16_t mask, got;
+    };
+
+    bool isys_poll(struct isys_poll_t *fds, unsigned int cnt, int timeout);
+    uint16_t isys_poll1(isys_fd_t fd, uint16_t mask, int timeout);
+
+The `isys_poll` function waits on a set of file descriptors for an event. The
+file descriptors and event masks are stored in `fds`, containing exactly `cnt`
+descriptors. The `timeout` indicates how long to wait for an event in
+milliseconds; a value of zero will return immediately, and a negative value
+will wait indefinitely until an event occurs.
+
+### Tasks
