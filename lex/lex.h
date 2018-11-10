@@ -9,6 +9,83 @@
 #include <stdio.h>
 
 
+struct lex_parse_t;
+
+
+#define LEX_START (-1)
+#define LEX_ERR   (-2)
+#define LEX_EOF   (-3)
+#define LEX_ID    (-0x10000)
+#define LEX_NUM   (-0x10001)
+
+
+/**
+ * ID to string apping structure.
+ *   @id: The identifier.
+ *   @str: The string.
+ */
+struct lex_map_t {
+	int id;
+	const char *str;
+};
+
+/**
+ * Token structure.
+ *   @id: The identifier.
+ *   @str: The string.
+ *   @path: The path.
+ *   @line, col: The line and column.
+ *   @next: The next token.
+ */
+struct lex_token_t {
+	int32_t id;
+	char *str;
+
+	const char *path;
+	uint32_t line, col;
+
+	struct lex_token_t *next;
+};
+
+/**
+ * Lexing rule structure.
+ *   @func: The function.
+ *   @arg: The argument.
+ */
+struct lex_rule_t {
+	struct lex_token_t *(*func)(struct lex_parse_t *, const void *);
+	const void *arg;
+};
+
+/**
+ * Lexer structure.
+ *   @file: The file.
+ *   @buf: The text buffer.
+ *   @idx, size: The current index and size.
+ *   @path: The path.
+ *   @line, col: The line and column.
+ *   @trim: The always trim option.
+ *   @rule: The rules array.
+ *   @cnt, max: The count and capacity of the rules.
+ *   @token: THe token list.
+ */
+struct lex_parse_t {
+	FILE *file;
+	int16_t *buf;
+	uint32_t idx, size;
+
+	char *path;
+	uint32_t line, col;
+
+	bool trim;
+
+	struct lex_rule_t *rule;
+	uint32_t cnt, max;
+
+	struct lex_token_t *token;
+};
+
+
 /**
  * Number type enumerator.
  *   @lex_int_v: Decimal integer.
@@ -35,26 +112,6 @@ struct lex_loc_t {
 	uint32_t line, col;
 };
 
-/**
- * Lexer structure.
- *   @file: The file.
- *   @buf: The text buffer.
- *   @idx, size: The current index and size.
- *   @path: The path.
- *   @line, col: The line and column.
- *   @trim: The always trim option.
- */
-struct lex_parse_t {
-	FILE *file;
-	int16_t *buf;
-	uint32_t idx, size;
-
-	char *path;
-	uint32_t line, col;
-
-	bool trim;
-};
-
 
 /*
  * parser declarations
@@ -65,44 +122,40 @@ void lex_parse_delete(struct lex_parse_t *parser);
 char *lex_parse_open(struct lex_parse_t **parse, char *path, uint32_t init, bool trim);
 void lex_parse_close(struct lex_parse_t *parse);
 
+struct lex_token_t *lex_parse_next(struct lex_parse_t *parse);
+struct lex_token_t *lex_parse_token(struct lex_parse_t *parse, int id, uint32_t len);
 void lex_parse_resize(struct lex_parse_t *lex, uint32_t size);
 
 char *lex_parse_error(const struct lex_parse_t *restrict parse, const char *restrict fmt, ...) __attribute__ ((format (printf, 2, 3)));
 
 /*
- * reading declarations
+ * rule declarations
  */
-void lex_read_buf(struct lex_parse_t *lex, void *buf, uint32_t cnt);
-void lex_read_str(struct lex_parse_t *lex, char *buf, uint32_t cnt);
-
-void *lex_dup_buf(struct lex_parse_t *lex, uint32_t cnt);
-void *lex_dup_str(struct lex_parse_t *lex, uint32_t cnt);
-
-void lex_skip(struct lex_parse_t *lex, uint32_t cnt);
+void lex_rule_add(struct lex_parse_t *parse, struct lex_token_t *(*func)(struct lex_parse_t *, const void *), const void *arg);
+void lex_rule_keyword(struct lex_parse_t *parse, uint32_t cnt, const struct lex_map_t *keyword);
+void lex_rule_symbol(struct lex_parse_t *parse, uint32_t cnt, const struct lex_map_t *symbol);
+void lex_rule_ident(struct lex_parse_t *parse, int id);
+void lex_rule_num(struct lex_parse_t *parse, int id);
 
 /*
- * token parsing declarations
+ * string conversion declarations
  */
-uint32_t lex_parse_trim(struct lex_parse_t *lex);
+char *lex_str_i32(const char *str, int base, int32_t *ret);
 
-bool lex_keyword_try(struct lex_parse_t *lex, const char *keyword, struct lex_loc_t *loc);
-
-bool lex_id_try(struct lex_parse_t *parse, char **id, struct lex_loc_t *loc);
-char *lex_id_get(struct lex_parse_t *parse, char **id, struct lex_loc_t *loc);
-
-bool lex_sym_try(struct lex_parse_t *parse, const char *sym, struct lex_loc_t *loc);
-char *lex_sym_get(struct lex_parse_t *parse, const char *sym, struct lex_loc_t *loc);
-
-bool lex_num_try(struct lex_parse_t *parse, char **num, enum lex_num_e *type);
+/*
+ * token declarations
+ */
+struct lex_token_t *lex_token_new(struct lex_parse_t *parse, int32_t id, char *str);
+void lex_token_delete(struct lex_token_t *token);
 
 
 /**
- * Retrieve the next input from the lexer.
+ * Retrieve the `i`th character from the parser.
  *   @lex: The lexer.
  *   @i: The index.
  *   &returns: The next input.
  */
-static inline int lex_get(struct lex_parse_t *parse, uint32_t i)
+static inline int lex_char(struct lex_parse_t *parse, uint32_t i)
 {
 	if(i >= parse->size)
 		lex_parse_resize(parse, 2 * i);
@@ -111,13 +164,132 @@ static inline int lex_get(struct lex_parse_t *parse, uint32_t i)
 }
 
 /**
+ * Read a single character from the parser.
+ *   @parser: The parser.
+ *   &returns: The read character.
+ */
+static inline int lex_read(struct lex_parse_t *parse)
+{
+	int ch;
+
+	ch = parse->buf[parse->idx];
+	parse->buf[parse->idx] = fgetc(parse->file);
+	parse->idx = (parse->idx + 1) % parse->size;
+
+	if(ch == '\n') {
+		parse->line++;
+		parse->col = 0;
+	}
+	else
+		parse->col++;
+
+	return ch;
+}
+
+/**
+ * Skip characters from the lexer.
+ *   @parse: The parser.
+ *   @cnt: The number of characters to skip.
+ */
+static inline void lex_skip(struct lex_parse_t *parse, uint32_t cnt)
+{
+	while(cnt-- > 0)
+		lex_read(parse);
+}
+
+
+/**
+ * Advance the parser by a single token.
+ *   @parse: The parser.
+ */
+static inline void lex_adv(struct lex_parse_t *parse)
+{
+	if(parse->token != NULL) {
+		struct lex_token_t *tmp;
+
+		tmp = parse->token;
+		parse->token = tmp->next;
+		lex_token_delete(tmp);
+	}
+	else
+		lex_token_delete(lex_parse_next(parse));
+}
+
+/**
+ * Retrieve the `i`th token from the parser.
+ *   @parse: The parser.
+ *   @i: The token index.
+ *   &returns: The token.
+ */
+static inline struct lex_token_t *lex_get(struct lex_parse_t *parse, uint32_t i)
+{
+	struct lex_token_t **token = &parse->token;
+
+	i++;
+	while(true) {
+		if(*token == NULL)
+			*token = lex_parse_next(parse);
+
+		if(i == 0)
+			break;
+
+		i--;
+		token = &(*token)->next;
+	}
+
+	return *token;
+}
+
+/**
+ * Peek at the top token on the parser.
+ *   @parse: The parser.
+ *   &returns: The token.
+ */
+static inline struct lex_token_t *lex_peek(struct lex_parse_t *parse)
+{
+	return lex_get(parse, 0);
+}
+
+/**
+ * Advance the parser and get the next token.
+ *   @parse: The parser.
+ *   &returns: The next token.
+ */
+static inline struct lex_token_t *lex_next(struct lex_parse_t *parse)
+{
+	lex_adv(parse);
+
+	return lex_peek(parse);
+}
+
+/**
+ * Try to match the next token.
+ *   @parse: The parser.
+ *   @id: The identifier.
+ *   &returns: The token if matched, null otherwise.
+ */
+static inline struct lex_token_t *lex_try(struct lex_parse_t *parse, int32_t id)
+{
+	struct lex_token_t *token;
+
+	token = lex_peek(parse);
+	if(token->id != id)
+		return NULL;
+
+	lex_adv(parse);
+
+	return token;
+}
+
+
+/**
  * Check if at the end-of-file.
  *   @parse: The parser.
  *   &returns: True if end-of-file.
  */
 static inline bool lex_eof(struct lex_parse_t *parse)
 {
-	return lex_get(parse, 0) == EOF;
+	return lex_char(parse, 0) == EOF;
 }
 static inline struct lex_loc_t lex_loc(const struct lex_parse_t *parse)
 {
@@ -167,6 +339,17 @@ static inline bool lex_isalnum(char ch)
 static inline bool lex_isspace(char ch)
 {
 	return (ch == ' ') || (ch == '\t') || (ch == '\v') || (ch == '\f') || (ch == '\r') || (ch == '\n');
+}
+
+/**
+ * Check if a character is a valid for an identifier.
+ *   @ch: The character.
+ *   @dig: Flag whether to include digits.
+ *   &returns: True if identifier.
+ */
+static inline bool lex_isid(char ch, bool dig)
+{
+	return lex_isalpha(ch) || (ch == '_') || (dig && lex_isdigit(ch));
 }
 
 /**

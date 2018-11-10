@@ -24,9 +24,6 @@ setconf()
   test -z "$windows" && { pskip="" ; wskip="skip" ; }
   test "$windows" && { pskip="skip" ; wskip="" ; }
 
-  echo "pskip: $pskip"
-  echo "wskip: $wskip"
-
   # inline header
   h_src "inline/inline.h"
 
@@ -194,6 +191,7 @@ c_src()
   test $# -lt 1 && fail "c_src function must take 1 argument"
   chk_space "$1" || fail "c_src parameter '$1' has spaces"
   test ${1##*.} != "c" && fail "c_src argument has invalid extension '.${1##*.}'"
+  test -z "$target" && fail "c_src requires target to be set first"
 
   __c_src_src="$1"
   __c_src_skip=""
@@ -224,6 +222,7 @@ h_src()
   test $# -ne 1 && fail "h_src function takes 1 argument"
   chk_space "$1" || fail "h_src parameter '$1' has spaces"
   test ${1##*.} != "h" && fail "h_src argument has invalid extension '.${1##*.}'"
+  test -z "$target" && fail "h_src requires target to be set first"
 
   hdrs="$hdrs $1"
   dist="$dist $1"

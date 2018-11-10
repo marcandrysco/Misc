@@ -7,6 +7,15 @@
 #include <stdarg.h>
 
 
+/*
+ * local declarations
+ */
+static struct lex_token_t *get_keyword(struct lex_parse_t *parse, const void *arg);
+static struct lex_token_t *get_symbol(struct lex_parse_t *parse, const void *arg);
+static struct lex_token_t *get_ident(struct lex_parse_t *parse, const void *arg);
+static struct lex_token_t *get_num(struct lex_parse_t *parse, const void *arg);
+
+
 /**
  * Create a parser.
  *   @file: The file.
@@ -18,33 +27,50 @@
 struct lex_parse_t *lex_parse_new(FILE *file, char *path, uint32_t init, bool trim)
 {
 	uint32_t i;
-	struct lex_parse_t *lex;
+	struct lex_parse_t *parse;
 
-	lex = malloc(sizeof(struct lex_parse_t));
-	lex->file = file;
-	lex->buf = malloc(2 * init);
-	lex->idx = 0;
-	lex->size = init;
-	lex->trim = trim;
+	parse = malloc(sizeof(struct lex_parse_t));
+	parse->file = file;
+	parse->buf = malloc(2 * init);
+	parse->idx = 0;
+	parse->size = init;
 
-	lex->path = path;
-	lex->line = lex->col = 0;
+	parse->path = path;
+	parse->line = parse->col = 0;
+
+	parse->trim = trim;
+
+	parse->rule = malloc(16 * sizeof(struct lex_rule_t));
+	parse->cnt = 0;
+	parse->max = 16;
+
+	parse->token = lex_token_new(parse, LEX_START, strdup(""));
 
 	for(i = 0; i < init; i++)
-		lex->buf[i] = fgetc(file);
+		parse->buf[i] = fgetc(file);
 
-	return lex;
+	return parse;
 }
 
 /**
  * Delete a parser.
  *   @parser: The parser.
  */
-void lex_parse_delete(struct lex_parse_t *parser)
+void lex_parse_delete(struct lex_parse_t *parse)
 {
-	free(parser->buf);
-	free(parser->path);
-	free(parser);
+	struct lex_token_t *token;
+
+	while(parse->token != NULL) {
+		token = parse->token;
+		parse->token = token->next;
+		free(token->str);
+		free(token);
+	}
+
+	free(parse->rule);
+	free(parse->buf);
+	free(parse->path);
+	free(parse);
 }
 
 
@@ -53,7 +79,7 @@ void lex_parse_delete(struct lex_parse_t *parser)
  *   @parse: Out. The opened parser.
  *   @path: Consumed. The path.
  *   @init: The initial size.
- *   @trim; Always trim option.
+ *   @trim: Always trim option.
  *   &returns: Error.
  */
 char *lex_parse_open(struct lex_parse_t **parse, char *path, uint32_t init, bool trim)
@@ -82,27 +108,75 @@ void lex_parse_close(struct lex_parse_t *parse)
 
 
 /**
+ * Parse the next token from the input.
+ *   @parse: The parser.
+ *   &returns: The next token.
+ */
+struct lex_token_t *lex_parse_next(struct lex_parse_t *parse)
+{
+	uint32_t i;
+	struct lex_token_t *token;
+
+	if(parse->trim) {
+		while(lex_isspace(lex_char(parse, 0)))
+			lex_read(parse);
+	}
+
+	for(i = 0; i < parse->cnt; i++) {
+		token = parse->rule[i].func(parse, parse->rule[i].arg);
+		if(token != NULL)
+			return token;
+	}
+
+	if(lex_char(parse, 0) == EOF)
+		return lex_token_new(parse, LEX_EOF, strdup(""));
+	else
+		return lex_token_new(parse, LEX_ERR, mprintf("Unexpected input '%c'.", lex_char(parse, 0)));
+}
+
+/**
+ * Parse a token from the input stream.
+ *   @parse: The parser.
+ *   @id: The identifier.
+ *   @len: The length.
+ *   &returns: The token.
+ */
+struct lex_token_t *lex_parse_token(struct lex_parse_t *parse, int id, uint32_t len)
+{
+	char *str;
+	uint32_t i;
+
+	str = malloc(len + 1);
+	for(i = 0; i < len; i++)
+		str[i] = lex_read(parse);
+
+	str[len] = '\0';
+
+	return lex_token_new(parse, id, str);
+}
+
+/**
  * Resize the lexer buffer.
- *   @lex: The lexer
+ *   @parser: The parser.
  *   @size: The new size.
  */
-void lex_parse_resize(struct lex_parse_t *lex, uint32_t size)
+void lex_parse_resize(struct lex_parse_t *parse, uint32_t size)
 {
 	uint32_t i;
 	int16_t *buf;
 
 	buf = malloc(2 * size);
 
-	memcpy(buf, lex->buf + lex->idx, 2 * (lex->size - lex->idx));
-	memcpy(buf + lex->size - lex->idx, lex->buf,  2 * lex->idx);
+	memcpy(buf, parse->buf + parse->idx, 2 * (parse->size - parse->idx));
+	memcpy(buf + parse->size - parse->idx, parse->buf,  2 * parse->idx);
 
-	for(i = lex->size; i < size; i++)
-		buf[i] = fgetc(lex->file);
+	for(i = parse->size; i < size; i++)
+		buf[i] = fgetc(parse->file);
 
-	free(lex->buf);
-	lex->idx = 0;
-	lex->size = size;
-	lex->buf = buf;
+	free(parse->buf);
+	parse->idx = 0;
+	parse->size = size;
+	parse->buf = buf;
 }
 
 
@@ -129,282 +203,183 @@ char *lex_parse_error(const struct lex_parse_t *restrict parse, const char *rest
 
 
 /**
- * Advance the lexer by reading into a buffer.
- *   @lex: The lexer.
- *   @buf: The output buffer.
- *   @cnt: The number of characters to read and the size of the buffer.
+ * Add a rule to the parser.
+ *   @parse: The parser.
+ *   @func: The function.
+ *   @arg: The argument.
  */
-void lex_read_buf(struct lex_parse_t *lex, void *buf, uint32_t cnt)
+void lex_rule_add(struct lex_parse_t *parse, struct lex_token_t *(*func)(struct lex_parse_t *, const void *), const void *arg)
 {
-	char ch;
+	if(parse->cnt == parse->max)
+		parse->rule = realloc(parse->rule, (parse->max *= 2) * sizeof(struct lex_rule_t));
+
+	parse->rule[parse->cnt++] = (struct lex_rule_t){ func, arg };
+}
+
+/**
+ * Add a rule for parsing a set of keywords.
+ *   @parse: The parser.
+ *   @cnt: The number of keywords.
+ *   @keyword: The keywords array.
+ */
+void lex_rule_keyword(struct lex_parse_t *parse, uint32_t cnt, const struct lex_map_t *keyword)
+{
 	uint32_t i;
 
-	i = lex->idx;
+	for(i = 0; i < cnt; i++)
+		lex_rule_add(parse, get_keyword, &keyword[i]);
+}
+static struct lex_token_t *get_keyword(struct lex_parse_t *parse, const void *arg)
+{
+	uint32_t i;
+	const struct lex_map_t *map = arg;
+	const char *str = map->str;
 
-	while(cnt-- > 0) {
-		if(buf != NULL)
-			*(uint8_t *)buf++ = lex->buf[i];
-
-		ch = fgetc(lex->file);
-		lex->buf[i] = ch;
-		i = (i + 1) % lex->size;
-
-		if(ch == '\n') {
-			lex->line++;
-			lex->col = 0;
-		}
-		else
-			lex->col++;
+	for(i = 0; str[i] != '\0'; i++) {
+		if(lex_char(parse, i) != str[i])
+			return NULL;
 	}
 
-	lex->idx = i;
+	if((str[i] != '\0') || lex_isid(lex_char(parse, i), true))
+		return NULL;
+
+	printf("match: %s\n", str);
+
+	return lex_parse_token(parse, map->id, i);
 }
 
 /**
- * Advance the lexer by reading into a string.
- *   @lex: The lexer.
- *   @buf: The output string.
- *   @cnt: The number of characters to read and the size of the buffer.
+ * Add a rule for parsing a set of symbols.
+ *   @parse: The parser.
+ *   @cnt: The number of symbols.
+ *   @symbol: The symbols array.
  */
-void lex_read_str(struct lex_parse_t *lex, char *buf, uint32_t cnt)
+void lex_rule_symbol(struct lex_parse_t *parse, uint32_t cnt, const struct lex_map_t *symbol)
 {
-	lex_read_buf(lex, buf, cnt);
+	uint32_t i;
 
-	if(buf != NULL)
-		buf[cnt] = '\0';
+	for(i = 0; i < cnt; i++)
+		lex_rule_add(parse, get_symbol, &symbol[i]);
 }
-
-/**
- * Advance the lexer by reading into an allocated buffer.
- *   @lex: The lexer.
- *   @cnt: The number of characters to read and size of the buffer.
- *   &returns: The allocated buffer.
- */
-void *lex_dup_buf(struct lex_parse_t *lex, uint32_t cnt)
+static struct lex_token_t *get_symbol(struct lex_parse_t *parse, const void *arg)
 {
-	void *buf;
+	uint32_t i;
+	const struct lex_map_t *map = arg;
+	const char *str = map->str;
 
-	buf = malloc(cnt);
-	lex_read_buf(lex, buf, cnt);
-
-	return buf;
-}
-
-/**
- * Advance the lexer by reading into an allocated buffer.
- *   @lex: The lexer.
- *   @cnt: The number of characters to read and size of the buffer.
- *   &returns: The null-terminated string.
- */
-void *lex_dup_str(struct lex_parse_t *lex, uint32_t cnt)
-{
-	char *buf;
-
-	buf = malloc(cnt + 1);
-	lex_read_buf(lex, buf, cnt);
-
-	return buf;
-}
-
-/**
- * Advance the lexer by skipping over characters.
- *   @lex: The lexer.
- *   @cnt: The number of characters.
- */
-void lex_skip(struct lex_parse_t *lex, uint32_t cnt)
-{
-	lex_read_buf(lex, NULL, cnt);
-}
-
-
-/**
- * Trim whitespace.
- *   @lex: The lexer.
- *   &returns: The number of whitespace removed.
- */
-uint32_t lex_parse_trim(struct lex_parse_t *lex)
-{
-	uint32_t cnt = 0;
-
-	while(lex_isspace(lex_get(lex, 0))) {
-		cnt++;
-		lex_skip(lex, 1);
+	for(i = 0; str[i] != '\0'; i++) {
+		if(lex_char(parse, i) != str[i])
+			return NULL;
 	}
 
-	return cnt;
+	if(str[i] != '\0')
+		return NULL;
+
+	return lex_parse_token(parse, map->id, i);
 }
 
-
 /**
- * Try to parse a keyword.
+ * Add a rule for parsing an identifier.
  *   @parse: The parser.
  *   @id: The identifier.
- *   @loc: Out. Optional. The location.
- *   &returns: True if parsed.
  */
-bool lex_keyword_try(struct lex_parse_t *parse, const char *keyword, struct lex_loc_t *loc)
+void lex_rule_ident(struct lex_parse_t *parse, int id)
 {
-	uint32_t i;
-
-	if(parse->trim)
-		lex_parse_trim(parse);
-
-	for(i = 0; keyword[i] != '\0'; i++) {
-		if(lex_get(parse, i) != keyword[i])
-			break;
-	}
-
-	if((keyword[i] != '\0') || lex_isalnum(lex_get(parse, i)))
-		return false;
-
-	if(loc != NULL)
-		*loc = lex_loc(parse);
-
-	lex_skip(parse, i);
-
-	return true;
+	lex_rule_add(parse, get_ident, (const void *)(intptr_t)id);
 }
-
-
-/**
- * Try to parse an identifier.
- *   @parse: The parser.
- *   @id: The identifier.
- *   @loc: Out. Optional. The location.
- *   &returns: True if parsed.
- */
-bool lex_id_try(struct lex_parse_t *parse, char **id, struct lex_loc_t *loc)
+static struct lex_token_t *get_ident(struct lex_parse_t *parse, const void *arg)
 {
 	uint32_t i;
 
-	if(parse->trim)
-		lex_parse_trim(parse);
-
-	if(!lex_isalpha(lex_get(parse, 0)))
-		return false;
+	if(!lex_isalpha(lex_char(parse, 0)) && (lex_char(parse, 0) != '_'))
+		return NULL;
 
 	i = 1;
-	while(lex_isalnum(lex_get(parse, i)))
+	while(lex_isalnum(lex_char(parse, i)) || (lex_char(parse, i) == '_'))
 		i++;
 
-
-	if(loc != NULL)
-		*loc = lex_loc(parse);
-
-	*id = lex_dup_str(parse, i);
-	return true;
+	return lex_parse_token(parse, (int)(intptr_t)arg, i);
 }
 
 /**
- * Parse an identifier.
+ * Add a rule for parsing an inteeger.
  *   @parse: The parser.
  *   @id: The identifier.
- *   @loc: Out. Optional. The location.
+ */
+void lex_rule_num(struct lex_parse_t *parse, int id)
+{
+	lex_rule_add(parse, get_num, (const void *)(intptr_t)id);
+}
+static struct lex_token_t *get_num(struct lex_parse_t *parse, const void *arg)
+{
+	uint32_t i;
+
+	if(!lex_isdigit(lex_char(parse, 0)))
+		return NULL;
+
+	i = 1;
+	while(lex_isalnum(lex_char(parse, i)) || (lex_char(parse, i) == '.'))
+		i++;
+
+	return lex_parse_token(parse, (int)(intptr_t)arg, i);
+}
+
+
+/**
+ * Convert a string to a 32-bit signed integer.
+ *   @str: The string.
+ *   @base: The number system base. Set to zero for autodetect.
+ *   @ret: Out. The parsing string.
  *   &returns: Error.
  */
-char *lex_id_get(struct lex_parse_t *parse, char **id, struct lex_loc_t *loc)
+char *lex_str_i32(const char *str, int base, int32_t *ret)
 {
-	if(lex_id_try(parse, id, loc))
-		return NULL;
-	else
-		return lex_parse_error(parse, "Expected identifier.");
+	long long v;
+	char *endptr;
+
+	errno = 0;
+	v = strtol(str, &endptr, base);
+	if(((v == 0) && (errno != 0)) || (*endptr != '\0'))
+		return mprintf("Value '%s' is not a valid integer.", str);
+	else if(v > INT32_MAX)
+		return mprintf("Value '%s' overflows a 32-bit signed integer.", str);
+	else if(v < INT32_MIN)
+		return mprintf("Value '%s' underflows a 32-bit signed integer.", str);
+
+	*ret = v;
+
+	return NULL;
 }
 
 
 /**
- * Try to parse a symbol.
- *   @parse: The parser.
- *   @sym: The symbol.
- *   @loc: Out. Optional. The location.
- *   &returns: True if parsed.
+ * Create a token.
+ *   @parse: The parser, used for line info.
+ *   @id: The token ID.
+ *   @str: Consumed. The token string.
+ *   &returns: The token.
  */
-bool lex_sym_try(struct lex_parse_t *parse, const char *sym, struct lex_loc_t *loc)
+struct lex_token_t *lex_token_new(struct lex_parse_t *parse, int32_t id, char *str)
 {
-	uint32_t i;
+	struct lex_token_t *token;
 
-	if(parse->trim)
-		lex_parse_trim(parse);
+	token = malloc(sizeof(struct lex_token_t));
+	token->path = parse->path;
+	token->line = parse->line;
+	token->col = parse->col;
+	token->id = id;
+	token->str = str;
+	token->next = NULL;
 
-	for(i = 0; sym[i] != '\0'; i++) {
-		if(lex_get(parse, i) != sym[i])
-			break;
-	}
-
-	if((sym[i] != '\0') || lex_issym(lex_get(parse, i)))
-		return false;
-
-	if(loc != NULL)
-		*loc = lex_loc(parse);
-
-	lex_skip(parse, i);
-
-	return true;
+	return token;
 }
 
 /**
- * Parse a symbol.
- *   @parse: The parser.
- *   @sym: The symbol.
- *   @loc: Out. Optional. The location.
- *   &returns: True if parsed.
+ * Delete a token.
+ *   @token: The token.
  */
-char *lex_sym_get(struct lex_parse_t *parse, const char *sym, struct lex_loc_t *loc)
+void lex_token_delete(struct lex_token_t *token)
 {
-	if(lex_sym_try(parse, sym, loc))
-		return NULL;
-	else
-		return lex_parse_error(parse, "Expected '%s'.", sym);
-}
-
-
-/**
- * Parse a number.
- *   @parse: The lexer.
- *   @id: Out. The identifier.
- *   @type: Out. The number type.
- *   &returns: True if parsed.
- */
-bool lex_num_try(struct lex_parse_t *parse, char **num, enum lex_num_e *type)
-{
-	uint32_t i;
-
-	if(parse->trim)
-		lex_parse_trim(parse);
-
-	if(lex_get(parse, 0) == '0') {
-		if(lex_get(parse, 1) == 'x') {
-			i = 2;
-			*type = lex_hex_v;
-		}
-		else if(lex_get(parse, 1) == 'b') {
-			i = 2;
-			*type = lex_bin_v;
-		}
-		else
-			i = 1;
-
-		while(lex_isalnum(lex_get(parse, i)))
-			i++;
-
-		*num = lex_dup_str(parse, i);
-		return true;
-	}
-	else if(lex_isdigit(lex_get(parse, 0)) || (lex_get(parse, 0) == '.')) {
-		bool flt = lex_get(parse, 0) == '.';
-
-		i = 1;
-
-		while(lex_isalnum(lex_get(parse, i)) || (lex_get(parse, i) == '.')) {
-			if(lex_get(parse, i) == '.')
-				flt = true;
-
-			i++;
-		}
-
-		*type = flt ? lex_flt_v : lex_int_v;
-		*num = lex_dup_str(parse, i);
-		return false;
-	}
-	else
-		return false;
+	free(token->str);
+	free(token);
 }
