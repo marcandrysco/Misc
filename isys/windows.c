@@ -1,5 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <winsock2.h>
 
 #include "windows.h"
 #include "isys.h"
@@ -32,7 +33,7 @@ struct isys_thread_t {
  *   @func: The callback function.
  *   @arg: The arguments.
  */
-struct isys_thread_t *isys_thread_create(void *(*func)(void *), void *arg)
+struct isys_thread_t *isys_thread_new(void *(*func)(void *), void *arg)
 {
 	struct isys_thread_t *thread;
 
@@ -209,4 +210,87 @@ void isys_event_delete(struct isys_event_t *event)
 {
 	CloseHandle(event->handle);
 	free(event);
+}
+
+
+/**
+ * Retrieve the file descriptor for the event.
+ *   @event: The event.
+ *   &returns: THe file descriptor.
+ */
+isys_fd_t isys_event_fd(struct isys_event_t *event)
+{
+	return isys_fd_handle(event->handle);
+}
+
+/**
+ * Signal an event.
+ *   @event: The event.
+ */
+void isys_event_signal(struct isys_event_t *event)
+{
+	SetEvent(event->handle);
+}
+
+/**
+ * Reset an event.
+ *   @event: The event.
+ */
+void isys_event_reset(struct isys_event_t *event)
+{
+	ResetEvent(event->handle);
+}
+
+/**
+ * Wait on an event.
+ *   @event: The event.
+ */
+void isys_event_wait(struct isys_event_t *event)
+{
+	fatal("stub");
+}
+
+
+
+/**
+ * Asynchronously poll files.
+ *   @fds: The file descriptor set.
+ *   @cnt: The size of the set.
+ *   @timeout: The timeout in milliseconds. Negative waits forever.
+ *   &returns: True if on file wakeup, false on timeout.
+ */
+bool isys_poll(struct isys_poll_t *fds, unsigned int cnt, int timeout)
+{
+	unsigned int i;
+	DWORD ret;
+	HANDLE handle[cnt];
+
+	for(i = 0; i < cnt; i++)
+		handle[i] = fds[i].fd.handle;
+
+	ret = WaitForMultipleObjects(cnt, handle, FALSE, (timeout >= 0) ? timeout : INFINITE);
+
+	if(ret >= 0x80)
+		return false;
+
+	if(fds[ret].fd.socket != INVALID_SOCKET) {
+		WSANETWORKEVENTS info;
+		uint16_t mask = 0;
+		WSAEnumNetworkEvents(fds[ret].fd.socket, fds[ret].fd.handle, &info);
+
+		if(info.lNetworkEvents & FD_CLOSE)
+			mask |= ISYS_ERROR;
+
+		if(info.lNetworkEvents & (FD_READ | FD_ACCEPT))
+			mask |= ISYS_READ;
+
+		if(info.lNetworkEvents & FD_WRITE)
+			mask |= ISYS_WRITE;
+
+		fds[ret].got = mask & fds[ret].mask;
+	}
+	else
+		fds[ret].got = (ISYS_READ | ISYS_WRITE) & fds[ret].mask;
+
+	return true;
 }

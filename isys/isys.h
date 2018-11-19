@@ -57,7 +57,6 @@ void isys_event_delete(struct isys_event_t *event);
 isys_fd_t isys_event_fd(struct isys_event_t *event);
 void isys_event_signal(struct isys_event_t *event);
 void isys_event_reset(struct isys_event_t *event);
-void isys_event_wait(struct isys_event_t *event);
 
 /*
  * polling declarations

@@ -64,3 +64,61 @@ toolchain using the prefix `x86_64-w64-mingw32`. The follow snippet shows a
 complete configure call for Mingw-w64.
 
     ./configure --windows --toolchain="x86_64-w64-mingw32"
+
+
+## Building `configure`
+
+The configure script is built by first including `shellconf.sh` and executing
+the commands below.
+
+
+### `project` Command
+
+The `project` command initializes the Makefile with the project name and
+version. This is should be called before any targets. Calling `project` is
+required for a `make dist`.
+
+    project <name> <version>
+
+The `name` parameter specifies the name of the project. Your project name is
+best to not include any spaces or special characters except for `-` and `_`.
+
+The `version` parameter specifies the version of the project. I suggest using
+a version that complies with the version information outlined in
+[../README.md].
+
+
+### `bin_target` command
+
+    bin_target <path> [<..config.h>] [<..inc.h>]
+
+
+### `c_src` Command
+
+    c_src <path> [skip]
+
+
+### `h_src` Command
+
+    h_src <path> [skip]
+
+
+### Options
+
+    bin_target PATH [..config.h ..inc.h]
+    bin_done
+
+    cfg_target PATH
+    cfg_done
+
+    inc_target PATH
+    inc_done
+
+The `c_src` command adds a C source file. The `PATH` must not contain spaces.
+The option `skip` will cause the file
+
+    begin_target PATH TYPE RULE
+
+The `begin_target` command internally sets up the appropriate target given the
+output path (`PATH`), target type (`TYPE`), and built using rule (`RULE`).
+This should not be called directly.

@@ -19,4 +19,9 @@ char *ifs_mkdir(const char *path, uint8_t mode);
  */
 char *ifs_dirname(const char *path);
 
+/*
+ * system declarations
+ */
+char *ifs_getfile(const char *path, void **data, uint64_t *nbytes);
+
 #endif

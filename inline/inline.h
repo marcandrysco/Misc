@@ -5,6 +5,7 @@
  * required headers
  */
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 
@@ -27,5 +28,42 @@ static inline void memzero(void *ptr, size_t size)
 {
 	memset(ptr, 0x00, size);
 }
+
+
+/**
+ * Macro for creating fuctions that find the maximum of two values. The value
+ * `NaN` is always "less".
+ *   @NAM: The function name.
+ *   @TY: The types.
+ */
+#define M_MAX_TY(NAM, TY) \
+	static inline TY m_max_##NAM(TY a, TY b) { if(a > b) return a; else return b; }
+
+/**
+ * Macro for creating fuctions that find the minimum of two values. The value
+ * `NaN` is always "less".
+ *   @NAM: The function name.
+ *   @TY: The types.
+ */
+#define M_MIN_TY(NAM, TY) \
+	static inline TY m_min_##NAM(TY a, TY b) { if(a < b) return a; else return b; }
+
+/**
+ * Macro for generating all math functions for a type.
+ *   @NAM: The function name.
+ *   @TY: The type.
+ */
+#define M_ALL_TY(NAM, TY) \
+	M_MAX_TY(NAM, TY) \
+	M_MIN_TY(NAM, TY) \
+
+
+/*
+ * generate math functions
+ */
+M_ALL_TY(i32, int32_t);
+M_ALL_TY(u32, uint32_t);
+M_ALL_TY(i64, int64_t);
+M_ALL_TY(u64, uint64_t);
 
 #endif

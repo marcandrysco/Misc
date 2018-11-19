@@ -1,20 +1,32 @@
 #ifndef WINDOWS_H
 #define WINDOWS_H
 
+#include <stdint.h>
 
-enum isys_fd_e {
-	isys_handle_v,
-};
-
-union isys_fd_u {
-	HANDLE handle;
-};
+/**
+ * File descriptor structure.
+ *   @handle: The handle.
+ *   @socket; The socket.
+ */
 struct isys_fd_t {
-	enum isys_fd_e type;
-	union isys_fd_u data;
+	void *handle;
+	int64_t socket;
 };
 
+static inline struct isys_fd_t isys_fd_handle(void *handle)
+{
+	return (struct isys_fd_t){ handle, INVALID_SOCKET };
+}
 
+static inline struct isys_fd_t isys_fd_socket(int64_t socket, void *handle)
+{
+	return (struct isys_fd_t){ handle, socket };
+}
+
+
+/*
+ * file descriptor type
+ */
 typedef struct isys_fd_t isys_fd_t;
 
 #endif

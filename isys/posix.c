@@ -168,7 +168,7 @@ struct isys_event_t *isys_event_new(void)
 	struct isys_event_t *event;
 
 	event = malloc(sizeof(struct isys_event_t));
-	event->fd = eventfd(0, 0);
+	event->fd = eventfd(EFD_NONBLOCK, 0);
 	if(event->fd < 0)
 		fatal("Cannot create event file descriptor.");
 
@@ -213,18 +213,6 @@ void isys_event_signal(struct isys_event_t *event)
  *   @event: The event.
  */
 void isys_event_reset(struct isys_event_t *event)
-{
-	uint64_t val;
-
-	if(read(event->fd, &val, 8) < 0)
-		fatal("Cannot read from event file descriptor. %s.", strerror(errno));
-}
-
-/**
- * Wait on an event.
- *   @event: The event.
- */
-void isys_event_wait(struct isys_event_t *event)
 {
 	uint64_t val;
 
