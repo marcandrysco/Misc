@@ -1,5 +1,4 @@
-#ifndef AVL_H
-#define AVL_H
+#pragma once
 
 /*
  * common headers
@@ -104,5 +103,3 @@ int avl_cmp_i64(const void *left, const void *right);
 int avl_cmp_u64(const void *left, const void *right);
 int avl_cmp_float(const void *left, const void *right);
 int avl_cmp_double(const void *left, const void *right);
-
-#endif

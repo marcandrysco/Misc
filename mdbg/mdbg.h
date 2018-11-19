@@ -1,5 +1,4 @@
-#ifndef MDBG_H
-#define MDBG_H
+#pragma once
 
 /*
  * required headers
@@ -93,7 +92,4 @@ static inline void c_free(void *ptr) { free(ptr); }
 #	define mprintf mdbg_mprintf
 #	define vmprintf mdbg_vmprintf
 #	define fatal mdbg_fatal
-#endif
-
-
 #endif

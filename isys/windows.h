@@ -1,5 +1,4 @@
-#ifndef WINDOWS_H
-#define WINDOWS_H
+#pragma once
 
 #include <stdint.h>
 
@@ -28,5 +27,3 @@ static inline struct isys_fd_t isys_fd_socket(int64_t socket, void *handle)
  * file descriptor type
  */
 typedef struct isys_fd_t isys_fd_t;
-
-#endif

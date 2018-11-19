@@ -1,5 +1,4 @@
-#ifndef INLINE_H
-#define INLINE_H
+#pragma once
 
 /*
  * required headers
@@ -65,5 +64,3 @@ M_ALL_TY(i32, int32_t);
 M_ALL_TY(u32, uint32_t);
 M_ALL_TY(i64, int64_t);
 M_ALL_TY(u64, uint64_t);
-
-#endif

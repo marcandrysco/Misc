@@ -1,5 +1,4 @@
-#ifndef IFS_H
-#define IFS_H
+#pragma once
 
 /*
  * required headers
@@ -23,5 +22,3 @@ char *ifs_dirname(const char *path);
  * system declarations
  */
 char *ifs_getfile(const char *path, void **data, uint64_t *nbytes);
-
-#endif

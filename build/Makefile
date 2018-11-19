@@ -1,4 +1,4 @@
-DIST=misc-0.1
+DIST=misc-0.0.1a
 
 all: w64
 

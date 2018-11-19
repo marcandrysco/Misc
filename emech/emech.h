@@ -1,5 +1,4 @@
-#ifndef EMECH_H
-#define EMECH_H
+#pragma once
 
 /*
  * required headers
@@ -84,6 +83,4 @@ __attribute__((noreturn)) static inline void unreachable() {
 	fprintf(stderr, "Fatal error. Unreachable code.\n");
 	abort();
 }
-#endif
-
 #endif

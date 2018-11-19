@@ -1,5 +1,4 @@
-#ifndef MEMBUF_H
-#define MEMBUF_H
+#pragma once
 
 /*
  * common headers
@@ -28,5 +27,3 @@ void membuf_addbuf(struct membuf_t *restrict buf, const void *restrict data, uin
 
 void membuf_addch(struct membuf_t *buf, char ch);
 void membuf_addstr(struct membuf_t *restrict buf, const char *restrict str);
-
-#endif

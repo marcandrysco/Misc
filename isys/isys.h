@@ -1,5 +1,4 @@
-#ifndef ISYS_H
-#define ISYS_H
+#pragma once
 
 /*
  * common headers
@@ -69,5 +68,3 @@ uint16_t isys_poll1(isys_fd_t fd, uint16_t mask, int timeout);
  */
 struct isys_task_t *isys_task_new(void (*func)(isys_fd_t, void *), void *arg);
 void isys_task_delete(struct isys_task_t *task);
-
-#endif

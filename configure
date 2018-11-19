@@ -1,9 +1,63 @@
 #!/bin/sh
 
+. ./shellconf.sh
+
+# project info
+project "misc" "0.0.1a"
+autoinc=1
+
+# library target
+lib_target "misc.so"
+hdr_target "misc.h"
+dep_lib "m"
+
+# windows dependencies
+if [ "$windows" ] ; then
+  dep_lib "ws2_32"
+fi
+
+# posix dependencies
+if [ -z "$windows" ] ; then
+  dep_lib "pthread"
+fi
+
+# skips based on platform
+test -z "$windows" && { pskip="" ; wskip="skip" ; }
+test "$windows" && { pskip="skip" ; wskip="" ; }
+
+# inline header
+h_src "inline/inline.h"
+
+# avl trees
+c_src "avl/avl.c"
+
+# error mechanism
+h_src "emech/emech.h"
+
+# memory debugging (deps: avl)
+c_src "mdbg/mdbg.c"
+
+# memory buffer (deps: mdbg)
+c_src "membuf/membuf.c"
+
+# anyfs (deps: emech, mdbg, membuf)
+c_src "lex/lex.c"
+
+# ifs (deps: mdbg)
+c_src "ifs/posix.c" $pskip
+c_src "ifs/windows.c" $wskip
+c_src "ifs/ifs.c"
+
+# isys (deps: mdbg)
+c_src "isys/posix.c" $pskip
+c_src "isys/windows.c" $wskip
+c_src "isys/isys.c"
+
+exit 0
+
 ## begin configuration options ##
 setconf()
 {
-  # project info
   project "misc" "0.1"
   lib_target "libmisc.so"
   hdr_target "misc.h"

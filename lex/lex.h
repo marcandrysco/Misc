@@ -1,5 +1,4 @@
-#ifndef LEX_H
-#define LEX_H
+#pragma once
 
 /*
  * common header
@@ -362,5 +361,3 @@ static inline bool lex_issym(int ch)
 {
 	return (ch == '~') || (ch == '|') || (ch == '&') || (ch == '^') || (ch == '+') || (ch == '-') || (ch == '*') || (ch == '/') || (ch == '.') || (ch == ',') || (ch == '=') || (ch == '>') || (ch == '<') || (ch == '?');
 }
-
-#endif
