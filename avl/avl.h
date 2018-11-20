@@ -56,7 +56,7 @@ struct avl_root_t {
 struct avl_node_t {
 	int_fast8_t bal;
 
-	void *ref;
+	const void *ref;
 	struct avl_node_t *parent, *left, *right;
 };
 

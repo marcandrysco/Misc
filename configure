@@ -6,8 +6,9 @@
 project "misc" "0.0.1a"
 autoinc=1
 
-# library target
-lib_target "misc.so"
+
+## library target ##
+lib_target "libmisc.so"
 hdr_target "misc.h"
 dep_lib "m"
 
@@ -52,6 +53,18 @@ c_src "ifs/ifs.c"
 c_src "isys/posix.c" $pskip
 c_src "isys/windows.c" $wskip
 c_src "isys/isys.c"
+
+# betterio (deps: mdbg)
+c_src "bio/bio.c"
+
+
+## test target ##
+test_target "misc-test"
+
+dep_obj "./libmisc.so"
+
+c_src "test/test.c"
+c_src "inline/test.c"
 
 exit 0
 

@@ -23,8 +23,14 @@ parameters `ptr` and `member` are safe and only evaluated once.
 The `memzero` function writes zeros to a piece of memory. This function
 interally calls `memset`.
 
+    static inline char *strprefix(const char *str, const char *pre)
+
+The `strprefix` function determines if `pre` is a prefix of `str`. If so, the
+function returns a pointer after the prefix in `str`. If not found, the
+function returns `NULL`.
 
 ## Examples
+
 
 ### Ex1. Pointers using `getparent`
 

@@ -3,6 +3,7 @@
 /*
  * required headers
  */
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -26,6 +27,22 @@
 static inline void memzero(void *ptr, size_t size)
 {
 	memset(ptr, 0x00, size);
+}
+
+/**
+ * Determine if `pre` is a prefix in the string `str`.
+ *   @str: The string.
+ *   @pre: The desired prefix.
+ *   &returns: The pointer after the prefix if found, null otherwise.
+ */
+static inline char *strprefix(const char *str, const char *pre)
+{
+	size_t len = strlen(pre);
+
+	if(memcmp(str, pre, len) == 0)
+		return (char *)(str + len);
+	else
+		return NULL;
 }
 
 
