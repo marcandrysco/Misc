@@ -37,6 +37,7 @@ project()
 	echo "${tab}tar jcf $_sc_proj-$_sc_ver.tar.bz2 $_sc_proj-$_sc_ver" >> "$_sc_mkfile"
 	echo "${tab}rm -rf $_sc_proj-$_sc_ver" >> "$_sc_mkfile"
   echo ".PHONY: dist" >> "$_sc_mkfile"
+  echo "-include Makefile.user" >> "$_sc_mkfile"
 }
 
 # Start a new target
@@ -63,6 +64,12 @@ begin_target()
   _sc_shared=""
   _sc_pic=""
 
+  if [ "$_sc_type" = "lib" ] ; then
+    _sc_dir="LIBDIR"
+  else
+    _sc_dir="BINDIR"
+  fi
+
   for _sc_opt in "$@" ; do
     case "$_sc_opt" in
       shared)    _sc_shared=" -shared" ; _sc_pic=" -fPIC" ;;
@@ -81,7 +88,7 @@ begin_target()
 
   echo "install: install_$_sc_target" >> "$_sc_mkfile"
   echo "install_$_sc_target: $_sc_target" >> "$_sc_mkfile"
-  echo "${tab}install --mode 0755 -CD $_sc_target \$(BINDIR)/$_sc_target" >> "$_sc_mkfile"
+  echo "${tab}install --mode 0755 -CD $_sc_target \$($_sc_dir)/$_sc_target" >> "$_sc_mkfile"
 }
 
 # Set the binary target.
@@ -127,9 +134,6 @@ hdr_target()
   _sc_hdr="$1"
   _sc_hdrs="_SC_HDRS$_sc_n"
   _sc_n=$((_sc_n+1))
-
-  rm -f "$_sc_hdr"
-  echo "#pragma once" >> "$_sc_hdr"
 
   echo "$_sc_hdrs = " >> "$_sc_mkfile"
   echo "all: $_sc_hdr" >> "$_sc_mkfile"
@@ -179,6 +183,18 @@ dep_lib()
   test -z "$_sc_libs" && fail "dep_lib called without a target"
 
   echo "$_sc_libs += -l$1" >> "$_sc_mkfile"
+}
+
+# Add an object as dependency.
+#   @obj: The object file name.
+dep_obj()
+{
+  test $# -ne 1 && fail "dep_obj function takes 1 argument"
+  chk_space "$1" || fail "dep_obj parameter '$1' has spaces"
+  test -z "$_sc_libs" && fail "dep_obj called without a target"
+
+  echo "$_sc_libs += $1" >> "$_sc_mkfile"
+  echo "$_sc_target: $1" >> "$_sc_mkfile"
 }
 
 # Add a C source file.
@@ -236,11 +252,14 @@ h_src()
   done
 
   if [ -z "$_sc_skip" ] ; then
-    test "$_sc_hdr" && echo "$_sc_hdrs += $_sc_src" >> "$_sc_mkfile"
+    if [ "$_sc_hdr" ] ; then
+      echo "$_sc_hdr: $_sc_src" >> "$_sc_mkfile"
+      echo "$_sc_hdrs += $_sc_src" >> "$_sc_mkfile"
+    fi
+    test "$_sc_inc" && echo "#include \"$_sc_src\"" >> "$_sc_inc"
   fi
 
   test "$_sc_proj" && echo "DIST += $_sc_src" >> "$_sc_mkfile"
-  test "$_sc_inc" && echo "#include \"$_sc_src\"" >> "$_sc_inc"
 }
 
 # Add a header include file.
@@ -409,6 +428,14 @@ if [ "$_sc_toolchain" ] ; then
   _sc_ld="${_sc_toolchain}-${_sc_ld}"
 fi
 
+# handle windows definitions
+if [ "$_sc_windows" ] ; then
+  windows=1
+fi
+
+# configure rpath
+test "$_sc_rpath" && _sc_ldflags="$_sc_ldflags -Wl,-rpath=\$(LIBDIR)"
+
 # config options
 autoinc=""
 
@@ -431,7 +458,7 @@ echo "all:" >> "$_sc_mkfile"
 echo "test:" >> "$_sc_mkfile"
 echo "clean:" >> "$_sc_mkfile"
 echo "${tab}rm -f \$(CLEAN)" >> "$_sc_mkfile"
-echo "Makefile: configure shellconf.sh" >> "$_sc_mkfile"
+echo "Makefile: configure shellconf.sh config.args" >> "$_sc_mkfile"
 echo "${tab}./configure \$(ARGS)" >> "$_sc_mkfile"
 echo ".PHONY: all test clean" >> "$_sc_mkfile"
 
