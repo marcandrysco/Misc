@@ -41,7 +41,7 @@ typedef int (*avl_compare_f)(const void *lhs, const void *rhs);
  *   @compare: The comparison callback.
  */
 struct avl_root_t {
-	unsigned int count;
+	uint64_t count;
 	struct avl_node_t *node;
 
 	avl_compare_f compare;

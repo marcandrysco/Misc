@@ -65,6 +65,7 @@ dep_obj "./libmisc.so"
 
 c_src "test/test.c"
 c_src "inline/test.c"
+c_src "isys/test.c"
 
 exit 0
 
