@@ -1,5 +1,10 @@
 #!/bin/sh
 
+##
+# ShellConf v1.0.0a
+#   A portable shell build system.
+##
+
 # special characters
 nl="`printf '\nX'`" ; nl="${nl%X}"
 tab="`printf '\tX'`" ; tab="${tab%X}"
@@ -256,7 +261,10 @@ h_src()
       echo "$_sc_hdr: $_sc_src" >> "$_sc_mkfile"
       echo "$_sc_hdrs += $_sc_src" >> "$_sc_mkfile"
     fi
-    test "$_sc_inc" && echo "#include \"$_sc_src\"" >> "$_sc_inc"
+    if [ "$_sc_inc" ] ; then
+      _sc_path="`pathto "$_sc_inc" "$_sc_src"`"
+      echo "#include \"$_sc_path\"" >> "$_sc_inc"
+    fi
   fi
 
   test "$_sc_proj" && echo "DIST += $_sc_src" >> "$_sc_mkfile"
@@ -347,6 +355,52 @@ quote()
 	printf %s "'$__quote_str'"
 }
 
+##                                                             
+# Calculate the depth of a path.                  
+#   pathdepth <path>
+#.
+pathdepth()            
+{                           
+  test $# -ne 1 && { echo "pathdepth requires one parameter" 1>&2 ; exit 1 ; }
+        
+  __pathdepth_n=0
+  __pathdepth_rem="$1"                                                 
+                                                           
+  while [ "$__pathdepth_rem" ] ; do                                               
+    __pathdepth_part="${__pathdepth_rem%%/*}"
+    test "$__pathdepth_part" = "$__pathdepth_rem" && break
+              
+    if [ "$__pathdepth_part" = ".." ] ; then
+      __pathdepth_n=$((__pathdepth_n-1))
+    elif [ "$__pathdepth_part" != "." ] ; then
+      __pathdepth_n=$((__pathdepth_n+1))
+    fi                                                     
+         
+    __pathdepth_rem="${__pathdepth_rem#*/}"
+  done
+                               
+  printf "%d" "$__pathdepth_n"
+}                                                
+                                                    
+##     
+# Compute a relative path from a source to a destination.
+#   pathto <src> <dst>                          
+#.                                                
+pathto()
+{    
+  test $# -ne 2 && { echo "pathto requires two parameters" 1>&2 ; exit 1 ; }
+                                                               
+  __pathto_n="`pathdepth $1`"
+  __pathto_out="$2"
+                             
+  while [ $__pathto_n -gt 0 ] ; do
+    __pathto_out="../$__pathto_out"
+    __pathto_n=$((__pathto_n-1))
+  done                                                      
+                                                             
+  printf "%s\n" "$__pathto_out"                                                     
+}
+
 ##
 # fail Function
 #   Print an error message and terminate. The function does not return.
@@ -363,13 +417,13 @@ fail()
 }
 
 # build arguments list
-_sc_rgs=""
+_sc_args=""
 for opt in "$@" ; do
-  _sc_rgs="$_sc_rgs`quote "$opt"` "
+  _sc_args="$_sc_args`quote "$opt"` "
 done
 
 # append config.args file
-test -f config.args && eval set -- "${_sc_rgs}`cat config.args | tr '\n\t' '  '`"
+test -f config.args && eval set -- "${_sc_args}`cat config.args | tr '\n\t' '  '`"
 
 
 # initialize options

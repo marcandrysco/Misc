@@ -7,8 +7,10 @@
 *.tar.gz
 *.tar.bz2
 
+config.args
 misc.h
 config.h
+misc-test
 
 /COMMIT
 /Makefile
