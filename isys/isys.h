@@ -27,6 +27,15 @@ struct isys_poll_t {
 
 
 /*
+ * time declarations
+ */
+int64_t isys_time(void);
+int64_t isys_utime(void);
+
+void isys_sleep(uint64_t sec);
+void isys_usleep(uint64_t usec);
+
+/*
  * thread declarations
  */
 typedef struct isys_thread_t *isys_thread_t;
