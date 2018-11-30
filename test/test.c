@@ -10,6 +10,8 @@ void isys_test();
 
 int main()
 {
+	setbuf(stdout, NULL);
+
 	inline_test();
 	isys_test();
 

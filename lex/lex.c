@@ -243,8 +243,6 @@ static struct lex_token_t *get_keyword(struct lex_parse_t *parse, const void *ar
 	if((str[i] != '\0') || lex_isid(lex_char(parse, i), true))
 		return NULL;
 
-	printf("match: %s\n", str);
-
 	return lex_parse_token(parse, map->id, i);
 }
 

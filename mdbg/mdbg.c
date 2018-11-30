@@ -1,6 +1,7 @@
 #define MDBG_NO_RENAME 1
 
 #include "mdbg.h"
+#include "../avl/avl.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -16,10 +17,13 @@ void chk(bool val)
 }
 
 
+
 /*
  * memory counter variable
  */
 int mdbg_cnt = 0;
+
+struct avl_root_t mdbg_tree = { 0, NULL, avl_cmp_ptr };
 
 
 /**
@@ -27,8 +31,18 @@ int mdbg_cnt = 0;
  */
 void mdbg_check(void)
 {
-	if(mdbg_cnt != 0)
+	if(mdbg_cnt != 0) {
+		struct avl_node_t *node;
+
 		fprintf(stderr, "missed %d allocations\n", mdbg_cnt);
+
+		for(node = avl_root_first(&mdbg_tree); node != NULL; node = avl_node_next(node)) {
+			const char *file = *(const char **)((void *)node - 16);
+			uint64_t line = *(uint64_t *)((void *)node - 8);
+
+			fprintf(stderr, "  %s:%lu\n", file, line);
+		}
+	}
 }
 
 /**
@@ -37,7 +51,8 @@ void mdbg_check(void)
 void mdbg_assert(void)
 {
 	if(mdbg_cnt != 0) {
-		fprintf(stderr, "missed %d allocations\n", mdbg_cnt);
+		mdbg_check();
+
 #ifndef RELEASE
 		abort();
 #endif
@@ -48,16 +63,18 @@ void mdbg_assert(void)
 /**
  * Base version of malloc.
  *   @size: The allocation size.
+ *   @file: The file.
+ *   @line: The line.
  *   &returns: The allocated pointer.
  */
-void *mdbg_malloc(size_t size)
+void *mdbg_malloc(size_t size, const char *file, uint64_t line)
 {
 #ifdef RELEASE
 	return mdbg_malloc_release(size);
 #elif TEST
 	return mdbg_malloc_test(size);
 #elif DEBUG
-	return mdbg_malloc_debug(size);
+	return mdbg_malloc_debug(size, file, line);
 #else
 #	error "Must define one of 'RELEASE', 'TEST', or 'DEBUG'."
 #endif
@@ -96,18 +113,24 @@ void *mdbg_malloc_test(size_t size)
 /**
  * Debug version of malloc.
  *   @size: The allocation size.
+ *   @file: The file.
+ *   @line: The line.
  *   &returns: The allocated pointer.
  */
-void *mdbg_malloc_debug(size_t size)
+void *mdbg_malloc_debug(size_t size, const char *file, uint64_t line)
 {
 	void *ptr;
 
-	ptr = mdbg_malloc_test(32 + size);
+	ptr = mdbg_malloc_test(48 + size + sizeof(struct avl_node_t));
 
 	*(uint64_t *)(ptr + 0) = (uint64_t)size;
 	*(uint64_t *)(ptr + 8) = (uint64_t)(ptr + 8) * 4221379234814892313ul;
 	*(uint64_t *)(ptr + 16 + size + 0) = (uint64_t)(ptr + 16 + 0) * 4221379234814892313ul;
 	*(uint64_t *)(ptr + 16 + size + 8) = (uint64_t)(ptr + 16 + 8) * 4221379234814892313ul;
+	*(const void **)(ptr + 16 + size + 16) = file;
+	*(uint64_t *)(ptr + 16 + size + 24) = line;
+	avl_node_init(ptr + 16 + size + 32, ptr);
+	avl_root_add(&mdbg_tree, ptr + 16 + size + 32);
 
 	return ptr + 16;
 }
@@ -175,13 +198,16 @@ void *mdbg_realloc_debug(void *ptr, size_t size)
 	chk(*(uint64_t *)(ptr + 8) == (uint64_t)(ptr + 8) * 4221379234814892313ul);
 	chk(*(uint64_t *)(ptr + 16 + chksize + 0) == (uint64_t)(ptr + 16 + 0) * 4221379234814892313ul);
 	chk(*(uint64_t *)(ptr + 16 + chksize + 8) == (uint64_t)(ptr + 16 + 8) * 4221379234814892313ul);
+	chk(avl_root_remove(&mdbg_tree, ptr) == (ptr + 16 + chksize + 32));
 
-	ptr = mdbg_realloc_test(ptr, 32 + size);
+	ptr = mdbg_realloc_test(ptr, 48 + size + sizeof(struct avl_node_t));
 
 	*(uint64_t *)(ptr + 0) = (uint64_t)size;
 	*(uint64_t *)(ptr + 8) = (uint64_t)(ptr + 8) * 4221379234814892313ul;
 	*(uint64_t *)(ptr + 16 + size + 0) = (uint64_t)(ptr + 16 + 0) * 4221379234814892313ul;
 	*(uint64_t *)(ptr + 16 + size + 8) = (uint64_t)(ptr + 16 + 8) * 4221379234814892313ul;
+	avl_node_init(ptr + 16 + size + 32, ptr);
+	avl_root_add(&mdbg_tree, ptr + 16 + size + 32);
 
 	return ptr + 16;
 }
@@ -242,6 +268,7 @@ void mdbg_free_debug(void *ptr)
 	chk(*(uint64_t *)(ptr + 8) == (uint64_t)(ptr + 8) * 4221379234814892313ul);
 	chk(*(uint64_t *)(ptr + 16 + size + 0) == (uint64_t)(ptr + 16 + 0) * 4221379234814892313ul);
 	chk(*(uint64_t *)(ptr + 16 + size + 8) == (uint64_t)(ptr + 16 + 8) * 4221379234814892313ul);
+	chk(avl_root_remove(&mdbg_tree, ptr) == (ptr + 16 + size + 32));
 
 	mdbg_free_test(ptr);
 }
@@ -281,7 +308,7 @@ char *mdbg_vmprintf(const char *restrict fmt, va_list args)
 	len = vsnprintf(NULL, 0, fmt, copy);
 	va_end(copy);
 
-	str = mdbg_malloc(len + 1);
+	str = mdbg_malloc(len + 1, __FILE__, __LINE__);
 	vsprintf(str, fmt, args);
 
 	return str;

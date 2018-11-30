@@ -301,11 +301,9 @@ static inline struct lex_loc_t lex_loc(const struct lex_parse_t *parse)
  *   @ch: The character.
  *   &returns: True if alphabetical or unicode.
  */
-static inline bool lex_isalpha(char ch)
+static inline bool lex_isalpha(int16_t ch)
 {
-	uint8_t byte = ch;
-
-	return ((byte >= 'A') && (byte <= 'Z')) || ((byte >= 'a') && (byte <= 'z')) || (byte >= 128);
+	return ((ch >= 'A') && (ch <= 'Z')) || ((ch >= 'a') && (ch <= 'z')) || (ch >= 128);
 }
 
 /**
@@ -313,11 +311,9 @@ static inline bool lex_isalpha(char ch)
  *   @ch: The character.
  *   &returns: True if digit.
  */
-static inline bool lex_isdigit(char ch)
+static inline bool lex_isdigit(int16_t ch)
 {
-	uint8_t byte = ch;
-
-	return (byte >= '0') && (byte <= '9');
+	return (ch >= '0') && (ch <= '9');
 }
 
 /**
@@ -325,7 +321,7 @@ static inline bool lex_isdigit(char ch)
  *   @ch: The character.
  *   &returns: True if alphabetical, unicode, or digit.
  */
-static inline bool lex_isalnum(char ch)
+static inline bool lex_isalnum(int16_t ch)
 {
 	return lex_isalpha(ch) || lex_isdigit(ch);
 }
@@ -335,7 +331,7 @@ static inline bool lex_isalnum(char ch)
  *   @ch: The character.
  *   &returns: True if whitespace.
  */
-static inline bool lex_isspace(char ch)
+static inline bool lex_isspace(int16_t ch)
 {
 	return (ch == ' ') || (ch == '\t') || (ch == '\v') || (ch == '\f') || (ch == '\r') || (ch == '\n');
 }
@@ -346,7 +342,7 @@ static inline bool lex_isspace(char ch)
  *   @dig: Flag whether to include digits.
  *   &returns: True if identifier.
  */
-static inline bool lex_isid(char ch, bool dig)
+static inline bool lex_isid(int16_t ch, bool dig)
 {
 	return lex_isalpha(ch) || (ch == '_') || (dig && lex_isdigit(ch));
 }
@@ -357,7 +353,7 @@ static inline bool lex_isid(char ch, bool dig)
  *   @ch: The character.
  *   &returns: True if symbol.
  */
-static inline bool lex_issym(int ch)
+static inline bool lex_issym(int16_t ch)
 {
 	return (ch == '~') || (ch == '|') || (ch == '&') || (ch == '^') || (ch == '+') || (ch == '-') || (ch == '*') || (ch == '/') || (ch == '.') || (ch == ',') || (ch == '=') || (ch == '>') || (ch == '<') || (ch == '?');
 }

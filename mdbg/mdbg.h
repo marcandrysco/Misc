@@ -5,6 +5,7 @@
  */
 #include <errno.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -12,6 +13,7 @@
  * external declarations
  */
 extern int mdbg_cnt;
+extern struct avl_root_t mdbg_tree;
 
 /*
  * function declarations
@@ -19,10 +21,10 @@ extern int mdbg_cnt;
 void mdbg_check(void);
 void mdbg_assert(void);
 
-void *mdbg_malloc(size_t size);
+void *mdbg_malloc(size_t size, const char *file, uint64_t line);
 void *mdbg_malloc_release(size_t size);
 void *mdbg_malloc_test(size_t size);
-void *mdbg_malloc_debug(size_t size);
+void *mdbg_malloc_debug(size_t size, const char *file, uint64_t line);
 
 void *mdbg_realloc(void *ptr, size_t size);
 void *mdbg_realloc_release(void *ptr, size_t size);
@@ -43,13 +45,15 @@ __attribute__((noreturn)) void mdbg_fatal(const char *restrict fmt, ...);
  * Debugged duplicate memory.
  *   @ptr: The original pointer.
  *   @size: The size.
+ *   @file: The file.
+ *   @line: The line.
  *   &returns: The duplicated memory.
  */
-static inline void *mdbg_memdup(const void *ptr, size_t size)
+static inline void *mdbg_memdup(const void *ptr, size_t size, const char *file, uint64_t line)
 {
 	void *alloc;
 
-	alloc = mdbg_malloc(size);
+	alloc = mdbg_malloc(size, file, line);
 	memcpy(alloc, ptr, size);
 
 	return alloc;
@@ -58,11 +62,13 @@ static inline void *mdbg_memdup(const void *ptr, size_t size)
 /**
  * Debugged duplicate a string.
  *   @str: The string.
+ *   @file: The file.
+ *   @line: The line.
  *   &returns: The copy.
  */
-static inline char *mdbg_strdup(const char *str)
+static inline char *mdbg_strdup(const char *str, const char *file, uint64_t line)
 {
-	return mdbg_memdup(str, strlen(str) + 1);
+	return mdbg_memdup(str, strlen(str) + 1, file, line);
 }
 
 
@@ -83,11 +89,11 @@ static inline void c_free(void *ptr) { free(ptr); }
 #	undef free
 #	undef memdup
 #	undef strdup
-#	define malloc mdbg_malloc
+#	define malloc(size) mdbg_malloc(size, __FILE__, __LINE__)
 #	define realloc mdbg_realloc
 #	define free mdbg_free
-#	define memdup mdbg_memdup
-#	define strdup mdbg_strdup
+#	define memdup(ptr, size) mdbg_memdup(ptr, size, __FILE__, __LINE__)
+#	define strdup(str) mdbg_strdup(str, __FILE__, __LINE__)
 #
 #	define mprintf mdbg_mprintf
 #	define vmprintf mdbg_vmprintf
