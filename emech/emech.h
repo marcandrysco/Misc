@@ -34,6 +34,13 @@ int asprintf(char **, const char *restrict, ...);
 	do { if(asprintf(&_emech_error, __VA_ARGS__) < 0) { fprintf(stderr, "cannot allocate string\n"); abort(); }; goto _emech_return; } while(0)
 
 /**
+ * Fail macro, calling the `onerr` code and returning the error message.
+ *   @msg: The heap allocated message.
+ */
+#define failmsg(msg) \
+	do { _emech_error = msg; goto _emech_return; } while(0)
+
+/**
  * Check and return macro.
  *   @err: The error value to check, returning and cleaning up on failure.
  */

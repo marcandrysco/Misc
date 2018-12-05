@@ -31,9 +31,13 @@ be run in event of an error that is generated via `fail` or propagated via
 `chkret`.
 
     #define fail(fmt, ...)
+    #define failmsg(msg)
 
 The `fail` macro executes the cleanup code given by `onerr` and returns the
 formatted error message as an allocated string.
+
+The `failmsg` macro executes the cleanup code given by `onerr` and returns the
+heap-allocated message `msg`.
 
     #define chkret(val)
     #define chkexit(val)

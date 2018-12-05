@@ -38,7 +38,8 @@ void mdbg_free_debug(void *ptr);
 
 char *mdbg_mprintf(const char *restrict fmt, ...) __attribute__ ((format (printf, 1, 2)));
 char *mdbg_vmprintf(const char *restrict fmt, va_list args);
-__attribute__((noreturn)) void mdbg_fatal(const char *restrict fmt, ...);
+__attribute__((noreturn)) void mdbg_fatal_release(const char *restrict fmt, ...);
+__attribute__((noreturn)) void mdbg_fatal_debug(const char *file, uint64_t line, const char *restrict fmt, ...);
 
 
 /**
@@ -94,6 +95,12 @@ static inline void c_free(void *ptr) { free(ptr); }
 #	define free mdbg_free
 #	define memdup(ptr, size) mdbg_memdup(ptr, size, __FILE__, __LINE__)
 #	define strdup(str) mdbg_strdup(str, __FILE__, __LINE__)
+#	
+#	ifndef RELEASE
+#		define mdbg_fatal(...) mdbg_fatal_debug(__FILE__, __LINE__, __VA_ARGS__)
+#	else
+#		define mdbg_fatal(...) mdbg_fatal_release(__VA_ARGS__)
+#	endif
 #
 #	define mprintf mdbg_mprintf
 #	define vmprintf mdbg_vmprintf

@@ -91,9 +91,11 @@ begin_target()
   echo "${tab}\$(LD)\$($_sc_objs)\$($_sc_libs)$_sc_shared \$(LDFLAGS) -o $_sc_target" >> "$_sc_mkfile"
   echo "CLEAN += $_sc_target" >> "$_sc_mkfile"
 
-  echo "install: install_$_sc_target" >> "$_sc_mkfile"
-  echo "install_$_sc_target: $_sc_target" >> "$_sc_mkfile"
-  echo "${tab}install --mode 0755 -CD $_sc_target \$($_sc_dir)/$_sc_target" >> "$_sc_mkfile"
+  if [ "$_sc_type" != "test" ] ; then
+    echo "install: install_$_sc_target" >> "$_sc_mkfile"
+    echo "install_$_sc_target: $_sc_target" >> "$_sc_mkfile"
+    echo "${tab}install --mode 0755 -CD $_sc_target \$($_sc_dir)/$_sc_target" >> "$_sc_mkfile"
+  fi
 }
 
 # Set the binary target.

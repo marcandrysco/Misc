@@ -316,15 +316,36 @@ char *mdbg_vmprintf(const char *restrict fmt, va_list args)
 
 /**
  * Terminate a program with a message.
- *   @fmt; The printf format.
+ *   @fmt: The printf format.
  *   @...: The printf arguments.
  *   &noreturn
  */
-__attribute__((noreturn)) void mdbg_fatal(const char *restrict fmt, ...)
+__attribute__((noreturn)) void mdbg_fatal_release(const char *restrict fmt, ...)
 {
 	va_list args;
 
 	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	fprintf(stderr, "\n");
+	va_end(args);
+
+	abort();
+}
+
+/**
+ * Terminate a program with a message and line information.
+ *   @file: The file.
+ *   @line: The line.
+ *   @fmt: The printf format.
+ *   @...: The printf arguments.
+ *   &noreturn
+ */
+__attribute__((noreturn)) void mdbg_fatal_debug(const char *file, uint64_t line, const char *restrict fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	fprintf(stderr, "%s:%lu: ", file, line);
 	vfprintf(stderr, fmt, args);
 	fprintf(stderr, "\n");
 	va_end(args);

@@ -44,7 +44,7 @@ struct lex_parse_t *lex_parse_new(FILE *file, char *path, uint32_t init, bool tr
 	parse->cnt = 0;
 	parse->max = 16;
 
-	parse->token = lex_token_new(parse, LEX_START, strdup(""));
+	parse->token = lex_token_new(parse, LEX_START, strdup(""), 0, 0);
 
 	for(i = 0; i < init; i++)
 		parse->buf[i] = fgetc(file);
@@ -129,9 +129,9 @@ struct lex_token_t *lex_parse_next(struct lex_parse_t *parse)
 	}
 
 	if(lex_char(parse, 0) == EOF)
-		return lex_token_new(parse, LEX_EOF, strdup(""));
+		return lex_token_new(parse, LEX_EOF, strdup(""), parse->line, parse->col);
 	else
-		return lex_token_new(parse, LEX_ERR, mprintf("Unexpected input '%c'.", lex_char(parse, 0)));
+		return lex_token_new(parse, LEX_ERR, mprintf("Unexpected input '%c'.", lex_char(parse, 0)), parse->line, parse->col);
 }
 
 /**
@@ -144,7 +144,10 @@ struct lex_token_t *lex_parse_next(struct lex_parse_t *parse)
 struct lex_token_t *lex_parse_token(struct lex_parse_t *parse, int id, uint32_t len)
 {
 	char *str;
-	uint32_t i;
+	uint32_t i, line, col;
+
+	line = parse->line;
+	col = parse->col;
 
 	str = malloc(len + 1);
 	for(i = 0; i < len; i++)
@@ -152,7 +155,7 @@ struct lex_token_t *lex_parse_token(struct lex_parse_t *parse, int id, uint32_t 
 
 	str[len] = '\0';
 
-	return lex_token_new(parse, id, str);
+	return lex_token_new(parse, id, str, line, col);
 }
 
 /**
@@ -195,7 +198,7 @@ char *lex_parse_error(const struct lex_parse_t *restrict parse, const char *rest
 	tmp = vmprintf(fmt, args);
 	va_end(args);
 
-	err = mprintf("%s:%u:%u: %s", parse->path, parse->line, parse->col, tmp);
+	err = mprintf("%s:%u:%u: %s", parse->path, parse->line + 1, parse->col + 1, tmp);
 	free(tmp);
 
 	return err;
@@ -355,16 +358,18 @@ char *lex_str_i32(const char *str, int base, int32_t *ret)
  *   @parse: The parser, used for line info.
  *   @id: The token ID.
  *   @str: Consumed. The token string.
+ *   @line: The line.
+ *   @col: The columne.
  *   &returns: The token.
  */
-struct lex_token_t *lex_token_new(struct lex_parse_t *parse, int32_t id, char *str)
+struct lex_token_t *lex_token_new(struct lex_parse_t *parse, int32_t id, char *str, uint32_t line, uint32_t col)
 {
 	struct lex_token_t *token;
 
 	token = malloc(sizeof(struct lex_token_t));
 	token->path = parse->path;
-	token->line = parse->line;
-	token->col = parse->col;
+	token->line = line;
+	token->col = col;
 	token->id = id;
 	token->str = str;
 	token->next = NULL;
@@ -380,4 +385,53 @@ void lex_token_delete(struct lex_token_t *token)
 {
 	free(token->str);
 	free(token);
+}
+
+
+/**
+ * Create an error message on the parser.
+ *   @parse: The parser.
+ *   @fmt: The printf-style format string.
+ *   @...: The printf-style arguments.
+ */
+char *lex_token_error(const struct lex_token_t *restrict token, const char *restrict fmt, ...)
+{
+	char *err;
+	va_list args;
+
+	va_start(args, fmt);
+	err = lex_token_verror(token, fmt, args);
+	va_end(args);
+
+	return err;
+}
+
+/**
+ * Create an error message on the parser.
+ *   @parse: The parser.
+ *   @fmt: The printf-style format string.
+ *   @...: The printf-style arguments.
+ */
+char *lex_token_verror(const struct lex_token_t *restrict token, const char *restrict fmt, va_list args)
+{
+	char *tmp, *err;
+
+	tmp = vmprintf(fmt, args);
+	err = mprintf("%s:%u:%u: %s", token->path, token->line + 1, token->col + 1, tmp);
+	free(tmp);
+
+	return err;
+}
+
+
+char *lex_error(struct lex_parse_t *restrict parse, const char *restrict fmt, ...)
+{
+	char *err;
+	va_list args;
+
+	va_start(args, fmt);
+	err = lex_token_verror(lex_peek(parse), fmt, args);
+	va_end(args);
+
+	return err;
 }

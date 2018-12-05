@@ -144,8 +144,17 @@ char *lex_str_i32(const char *str, int base, int32_t *ret);
 /*
  * token declarations
  */
-struct lex_token_t *lex_token_new(struct lex_parse_t *parse, int32_t id, char *str);
+struct lex_token_t *lex_token_new(struct lex_parse_t *parse, int32_t id, char *str, uint32_t line, uint32_t col);
 void lex_token_delete(struct lex_token_t *token);
+
+char *lex_token_error(const struct lex_token_t *restrict token, const char *restrict fmt, ...);
+char *lex_token_verror(const struct lex_token_t *restrict token, const char *restrict fmt, va_list args);
+
+/*
+ * convenience functions
+ */
+char *lex_error(struct lex_parse_t *restrict parse, const char *restrict fmt, ...) __attribute__ ((format (printf, 2, 3)));
+
 
 
 /**
